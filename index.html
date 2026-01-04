@@ -810,6 +810,7 @@
         function PTVisitTracker() {
             const [visits, setVisits] = useState([]);
             const [regNumber, setRegNumber] = useState('');
+            const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
             const [nextVisitDate, setNextVisitDate] = useState('');
             const [showModal, setShowModal] = useState(false);
             const [selectedDate, setSelectedDate] = useState(null);
@@ -822,6 +823,8 @@
             const [loading, setLoading] = useState(false);
             const [googleScriptUrl, setGoogleScriptUrl] = useState(localStorage.getItem('googleScriptUrl') || '');
             const [showSetup, setShowSetup] = useState(!localStorage.getItem('googleScriptUrl'));
+            const [showPatientHistory, setShowPatientHistory] = useState(false);
+            const [selectedPatient, setSelectedPatient] = useState(null);
 
             // Load data from Google Sheets when component mounts
             useEffect(() => {
@@ -874,6 +877,58 @@
                     total: counts.total.size
                 };
             }, [visits]);
+
+            // TABLET TRACKING: Calculate cumulative tablet days per patient
+            const patientTabletData = useMemo(() => {
+                const patientData = {};
+
+                visits.forEach(visit => {
+                    const regNum = visit.regNumber.trim().toUpperCase();
+                    
+                    if (!patientData[regNum]) {
+                        patientData[regNum] = {
+                            regNumber: visit.regNumber,
+                            totalTabletDays: 0,
+                            visits: [],
+                            firstVisitDate: visit.visitDate,
+                            lastVisitDate: visit.visitDate
+                        };
+                    }
+
+                    patientData[regNum].totalTabletDays += visit.tabletDays;
+                    patientData[regNum].visits.push(visit);
+                    
+                    // Track date range
+                    if (new Date(visit.visitDate) < new Date(patientData[regNum].firstVisitDate)) {
+                        patientData[regNum].firstVisitDate = visit.visitDate;
+                    }
+                    if (new Date(visit.visitDate) > new Date(patientData[regNum].lastVisitDate)) {
+                        patientData[regNum].lastVisitDate = visit.visitDate;
+                    }
+                });
+
+                // Sort visits by date for each patient
+                Object.values(patientData).forEach(patient => {
+                    patient.visits.sort((a, b) => new Date(a.visitDate) - new Date(b.visitDate));
+                });
+
+                return patientData;
+            }, [visits]);
+
+            // Helper function to get patient's cumulative tablet days
+            const getPatientTotalTablets = useCallback((regNumber) => {
+                const regNum = regNumber.trim().toUpperCase();
+                return patientTabletData[regNum]?.totalTabletDays || 0;
+            }, [patientTabletData]);
+
+            // Helper function to calculate tablet days
+            const calculateTabletDays = (visitDate, nextVisitDate) => {
+                const visit = new Date(visitDate);
+                const next = new Date(nextVisitDate);
+                const diffTime = next - visit;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays > 0 ? diffDays : 0;
+            };
 
             // OPTIMIZATION: Memoized function to get unique patient count for a specific date
             const getUniquePatientsForDate = useCallback((date) => {
@@ -938,8 +993,10 @@
                             const parsed = JSON.parse(savedVisits);
                             const visitsWithDates = parsed.map(visit => ({
                                 ...visit,
+                                visitDate: visit.visitDate ? new Date(visit.visitDate) : new Date(visit.recordedAt || visit.nextVisitDate),
                                 nextVisitDate: new Date(visit.nextVisitDate),
-                                recordedAt: new Date(visit.recordedAt)
+                                recordedAt: new Date(visit.recordedAt),
+                                tabletDays: visit.tabletDays || 0
                             }));
                             setVisits(visitsWithDates);
                         } catch (e) {
@@ -958,9 +1015,11 @@
                     if (result.success && result.visits) {
                         const visitsWithDates = result.visits.map(visit => ({
                             ...visit,
+                            visitDate: visit.visitDate ? new Date(visit.visitDate) : new Date(visit.recordedAt || visit.nextVisitDate),
                             nextVisitDate: new Date(visit.nextVisitDate),
                             recordedAt: new Date(visit.recordedAt),
-                            completedAt: visit.completedAt ? new Date(visit.completedAt) : null
+                            completedAt: visit.completedAt ? new Date(visit.completedAt) : null,
+                            tabletDays: visit.tabletDays || 0
                         }));
                         setVisits(visitsWithDates);
                         
@@ -980,8 +1039,10 @@
                             const parsed = JSON.parse(savedVisits);
                             const visitsWithDates = parsed.map(visit => ({
                                 ...visit,
+                                visitDate: visit.visitDate ? new Date(visit.visitDate) : new Date(visit.recordedAt || visit.nextVisitDate),
                                 nextVisitDate: new Date(visit.nextVisitDate),
-                                recordedAt: new Date(visit.recordedAt)
+                                recordedAt: new Date(visit.recordedAt),
+                                tabletDays: visit.tabletDays || 0
                             }));
                             setVisits(visitsWithDates);
                             console.log('Loaded from local storage (Google Sheets failed)');
@@ -1008,31 +1069,56 @@
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 
-                if (!regNumber || !nextVisitDate) {
+                if (!regNumber || !visitDate || !nextVisitDate) {
                     alert('Please fill in all required fields');
                     return;
                 }
 
+                const visit = new Date(visitDate);
                 const nextVisit = new Date(nextVisitDate);
+
+                // Validation: Next visit date must be after visit date
+                if (nextVisit <= visit) {
+                    alert('Next Visit Date must be after Visit Date');
+                    return;
+                }
+
+                // Calculate tablet days
+                const tabletDays = calculateTabletDays(visitDate, nextVisitDate);
+
+                // Get current total for this patient
+                const currentTotal = getPatientTotalTablets(regNumber);
+                const newTotal = currentTotal + tabletDays;
 
                 const newVisit = {
                     id: Date.now(),
                     regNumber: regNumber.trim(),
+                    visitDate: visit,
                     nextVisitDate: nextVisit,
+                    tabletDays: tabletDays,
                     completed: false,
                     recordedAt: new Date()
                 };
 
+                // Save to Google Sheets
                 const result = await callGoogleScript('addVisit', { visit: newVisit });
                 
                 if (result && result.success) {
+                    alert(`✅ Visit recorded successfully!\n\n` +
+                          `Tablets given this visit: ${tabletDays} days\n` +
+                          `Total tablets for ${regNumber}: ${newTotal} days`);
                     setRegNumber('');
+                    setVisitDate(new Date().toISOString().split('T')[0]);
                     setNextVisitDate('');
                 } else {
                     const updatedVisits = [newVisit, ...visits];
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
+                    alert(`✅ Visit recorded successfully!\n\n` +
+                          `Tablets given this visit: ${tabletDays} days\n` +
+                          `Total tablets for ${regNumber}: ${newTotal} days`);
                     setRegNumber('');
+                    setVisitDate(new Date().toISOString().split('T')[0]);
                     setNextVisitDate('');
                 }
             };
@@ -1192,6 +1278,15 @@
                 };
             }, [visits]);
 
+            const openPatientHistory = (regNumber) => {
+                const regNum = regNumber.trim().toUpperCase();
+                const patientInfo = patientTabletData[regNum];
+                if (patientInfo) {
+                    setSelectedPatient(patientInfo);
+                    setShowPatientHistory(true);
+                }
+            };
+
             const openModalForDate = (date) => {
                 setSelectedDate(date);
                 setShowModal(true);
@@ -1348,28 +1443,50 @@
                                             <p>No records found</p>
                                         </div>
                                     ) : (
-                                        filteredLookupVisits.map(visit => (
-                                            <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
-                                                <div className="patient-info">
-                                                    <div className="patient-reg">{visit.regNumber}</div>
-                                                    <div className="patient-date">
-                                                        Next: {formatDate(visit.nextVisitDate)}
-                                                        {visit.completed && ' - Completed ✓'}
+                                        filteredLookupVisits.map(visit => {
+                                            const totalTablets = getPatientTotalTablets(visit.regNumber);
+                                            return (
+                                                <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
+                                                    <div className="patient-info">
+                                                        <div className="patient-reg">{visit.regNumber}</div>
+                                                        <div className="patient-date">
+                                                            Visit: {formatDate(visit.visitDate)} → Next: {formatDate(visit.nextVisitDate)}
+                                                        </div>
+                                                        <div className="patient-date" style={{fontSize: '0.75rem', marginTop: '0.25rem'}}>
+                                                            Recorded: {formatDate(visit.recordedAt)}
+                                                        </div>
+                                                        <div style={{
+                                                            marginTop: '0.5rem',
+                                                            display: 'flex',
+                                                            gap: '1rem',
+                                                            fontSize: '0.8rem'
+                                                        }}>
+                                                            <span style={{color: 'var(--secondary)', fontWeight: 600}}>
+                                                                📊 This visit: {visit.tabletDays} days
+                                                            </span>
+                                                            <span style={{color: 'var(--primary)', fontWeight: 600}}>
+                                                                💊 Total: {totalTablets} days
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="patient-date" style={{fontSize: '0.75rem', marginTop: '0.25rem'}}>
-                                                        Recorded: {formatDate(visit.recordedAt)}
+                                                    <div className="patient-actions">
+                                                        <button 
+                                                            className="btn btn-secondary btn-small"
+                                                            onClick={() => openPatientHistory(visit.regNumber)}
+                                                            style={{marginRight: '0.5rem'}}
+                                                        >
+                                                            History
+                                                        </button>
+                                                        <button 
+                                                            className="btn btn-danger btn-small"
+                                                            onClick={() => deleteVisit(visit.id)}
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="patient-actions">
-                                                    <button 
-                                                        className="btn btn-danger btn-small"
-                                                        onClick={() => deleteVisit(visit.id)}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
 
@@ -1530,6 +1647,29 @@
                                         required
                                         autoFocus
                                     />
+                                    {regNumber && patientTabletData[regNumber.trim().toUpperCase()] && (
+                                        <div style={{
+                                            marginTop: '0.5rem',
+                                            padding: '0.5rem',
+                                            background: '#e3f2fd',
+                                            borderRadius: '6px',
+                                            fontSize: '0.85rem',
+                                            color: '#1976d2'
+                                        }}>
+                                            <strong>Existing Patient</strong> - Total tablets so far: <strong>{getPatientTotalTablets(regNumber)} days</strong>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Visit Date *</label>
+                                    <input
+                                        type="date"
+                                        className="form-input"
+                                        value={visitDate}
+                                        onChange={(e) => setVisitDate(e.target.value)}
+                                        required
+                                    />
                                 </div>
 
                                 <div className="form-group">
@@ -1542,6 +1682,28 @@
                                         required
                                     />
                                 </div>
+
+                                {visitDate && nextVisitDate && (
+                                    <div style={{
+                                        marginBottom: '1.25rem',
+                                        padding: '1rem',
+                                        background: 'linear-gradient(135deg, #00cc88 0%, #00aa70 100%)',
+                                        borderRadius: '8px',
+                                        color: 'white'
+                                    }}>
+                                        <div style={{fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.25rem'}}>
+                                            Tablets to be given:
+                                        </div>
+                                        <div style={{fontSize: '2rem', fontWeight: 700}}>
+                                            {calculateTabletDays(visitDate, nextVisitDate)} days
+                                        </div>
+                                        {regNumber && (
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9, marginTop: '0.5rem'}}>
+                                                New total: {getPatientTotalTablets(regNumber) + calculateTabletDays(visitDate, nextVisitDate)} days
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <button type="submit" className="btn btn-primary" style={{width: '100%', marginBottom: '1rem'}}>
                                     Add Next Visit
@@ -1576,7 +1738,12 @@
                                             <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
                                                 <div className="patient-info">
                                                     <div className="patient-reg">{visit.regNumber}</div>
-                                                    <div className="patient-date">Next: {formatDate(visit.nextVisitDate)}</div>
+                                                    <div className="patient-date">
+                                                        Visit: {formatDate(visit.visitDate)} → Next: {formatDate(visit.nextVisitDate)}
+                                                    </div>
+                                                    <div className="patient-date" style={{marginTop: '0.25rem', color: 'var(--secondary)', fontWeight: 600}}>
+                                                        📊 {visit.tabletDays} days tablets
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -1847,6 +2014,124 @@
                                         </div>
                                     </>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PATIENT HISTORY MODAL */}
+                    {showPatientHistory && selectedPatient && (
+                        <div className="modal-overlay" onClick={() => setShowPatientHistory(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '700px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">📊 Patient Tablet History</div>
+                                    <button className="modal-close" onClick={() => setShowPatientHistory(false)}>×</button>
+                                </div>
+
+                                <div style={{
+                                    background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
+                                    color: 'white',
+                                    padding: '1.5rem',
+                                    borderRadius: '12px',
+                                    marginBottom: '1.5rem'
+                                }}>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem'}}>
+                                        {selectedPatient.regNumber}
+                                    </div>
+                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '1rem'}}>
+                                        <div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.25rem'}}>
+                                                Total Tablets
+                                            </div>
+                                            <div style={{fontSize: '2.5rem', fontWeight: 700}}>
+                                                {selectedPatient.totalTabletDays}
+                                            </div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9}}>days</div>
+                                        </div>
+                                        <div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.25rem'}}>
+                                                Total Visits
+                                            </div>
+                                            <div style={{fontSize: '2.5rem', fontWeight: 700}}>
+                                                {selectedPatient.visits.length}
+                                            </div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9}}>visits</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3 style={{marginBottom: '1rem', color: 'var(--primary)', fontSize: '1.1rem'}}>
+                                    Visit History
+                                </h3>
+
+                                <div className="patient-list" style={{maxHeight: '400px'}}>
+                                    {selectedPatient.visits.map((visit, index) => (
+                                        <div key={visit.id} style={{
+                                            background: 'var(--bg-main)',
+                                            padding: '1rem',
+                                            borderRadius: '8px',
+                                            marginBottom: '0.75rem',
+                                            border: '2px solid var(--border)',
+                                            borderLeft: '4px solid var(--secondary)'
+                                        }}>
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'flex-start',
+                                                marginBottom: '0.5rem'
+                                            }}>
+                                                <div>
+                                                    <div style={{
+                                                        fontSize: '0.75rem',
+                                                        color: 'var(--text-secondary)',
+                                                        marginBottom: '0.25rem'
+                                                    }}>
+                                                        Visit #{selectedPatient.visits.length - index}
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: '1rem',
+                                                        fontWeight: 600,
+                                                        color: 'var(--text-primary)'
+                                                    }}>
+                                                        {formatDate(visit.visitDate)}
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    background: 'var(--secondary)',
+                                                    color: 'white',
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: '6px',
+                                                    fontWeight: 700,
+                                                    fontSize: '1.1rem'
+                                                }}>
+                                                    {visit.tabletDays} days
+                                                </div>
+                                            </div>
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                color: 'var(--text-secondary)',
+                                                marginTop: '0.5rem'
+                                            }}>
+                                                <div>Next visit: {formatDate(visit.nextVisitDate)}</div>
+                                                <div>Status: {visit.completed ? '✅ Completed' : '⏳ Pending'}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div style={{
+                                    marginTop: '1.5rem',
+                                    padding: '1rem',
+                                    background: '#e8f5e9',
+                                    borderRadius: '8px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>
+                                        Treatment Duration
+                                    </div>
+                                    <div style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--secondary)'}}>
+                                        {formatDate(selectedPatient.firstVisitDate)} to {formatDate(selectedPatient.lastVisitDate)}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
