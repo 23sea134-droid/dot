@@ -266,6 +266,15 @@
             background: var(--text-primary);
         }
 
+        .btn-lookup {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .btn-lookup:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+        }
+
         .patient-list {
             max-height: 600px;
             overflow-y: auto;
@@ -381,6 +390,12 @@
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 1rem;
+        }
+
+        .calendar-month-subcount {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
         }
 
         .calendar-month-holidays {
@@ -611,105 +626,35 @@
             color: var(--text-primary);
         }
 
-        .month-calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.5rem;
-            margin-top: 1rem;
+        .search-box {
+            margin-bottom: 1.5rem;
         }
 
-        .month-date-card {
+        .lookup-stats {
             background: var(--bg-main);
-            border: 2px solid var(--border);
-            border-radius: 8px;
             padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .month-date-card:hover {
-            border-color: var(--primary);
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .month-date-card.today {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .month-date-card.today:hover {
-            background: var(--primary-dark);
-        }
-
-        .month-date-day {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        .month-date-count {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .month-date-card.today .month-date-count {
-            color: white;
-            opacity: 0.9;
-        }
-
-        .year-view-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .year-month-card {
-            background: var(--bg-main);
-            border: 2px solid var(--border);
             border-radius: 8px;
-            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .lookup-stat {
             text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
         }
 
-        .year-month-card:hover {
-            border-color: var(--primary);
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .year-month-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .year-month-count {
+        .lookup-stat-value {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: var(--primary);
         }
 
-        .year-data-list {
-            margin-top: 2rem;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        @media (max-width: 768px) {
-            .year-view-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        .lookup-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         @media (max-width: 1024px) {
@@ -799,7 +744,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo, useCallback } = React;
 
         const MONTHS = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -872,6 +817,8 @@
             const [showYearView, setShowYearView] = useState(false);
             const [selectedMonth, setSelectedMonth] = useState(null);
             const [showMonthView, setShowMonthView] = useState(false);
+            const [showLookup, setShowLookup] = useState(false);
+            const [lookupSearch, setLookupSearch] = useState('');
             const [loading, setLoading] = useState(false);
             const [googleScriptUrl, setGoogleScriptUrl] = useState(localStorage.getItem('googleScriptUrl') || '');
             const [showSetup, setShowSetup] = useState(!localStorage.getItem('googleScriptUrl'));
@@ -883,7 +830,62 @@
                 }
             }, [googleScriptUrl]);
 
-            // FIXED: Improved Google Sheets API function with proper error handling
+            // OPTIMIZATION: Memoized calculations for unique patients
+            const uniquePatientCounts = useMemo(() => {
+                const counts = {
+                    byMonth: {},
+                    byDate: {},
+                    total: new Set()
+                };
+
+                visits.forEach(visit => {
+                    const visitDate = new Date(visit.nextVisitDate);
+                    const month = visitDate.getMonth();
+                    const dateKey = visitDate.toDateString();
+                    const regNum = visit.regNumber.trim().toUpperCase();
+
+                    // Track unique patients overall
+                    counts.total.add(regNum);
+
+                    // Track unique patients by month
+                    if (!counts.byMonth[month]) {
+                        counts.byMonth[month] = new Set();
+                    }
+                    if (!visit.completed) {
+                        counts.byMonth[month].add(regNum);
+                    }
+
+                    // Track unique patients by date
+                    if (!counts.byDate[dateKey]) {
+                        counts.byDate[dateKey] = new Set();
+                    }
+                    if (!visit.completed) {
+                        counts.byDate[dateKey].add(regNum);
+                    }
+                });
+
+                return {
+                    byMonth: Object.fromEntries(
+                        Object.entries(counts.byMonth).map(([k, v]) => [k, v.size])
+                    ),
+                    byDate: Object.fromEntries(
+                        Object.entries(counts.byDate).map(([k, v]) => [k, v.size])
+                    ),
+                    total: counts.total.size
+                };
+            }, [visits]);
+
+            // OPTIMIZATION: Memoized function to get unique patient count for a specific date
+            const getUniquePatientsForDate = useCallback((date) => {
+                const dateKey = new Date(date).toDateString();
+                return uniquePatientCounts.byDate[dateKey] || 0;
+            }, [uniquePatientCounts]);
+
+            // OPTIMIZATION: Memoized function to get unique patient count for a month
+            const getUniquePatientsForMonth = useCallback((monthIndex) => {
+                return uniquePatientCounts.byMonth[monthIndex] || 0;
+            }, [uniquePatientCounts]);
+
             const callGoogleScript = async (action, data = {}) => {
                 if (!googleScriptUrl) {
                     alert('Please setup Google Sheets connection first!');
@@ -893,7 +895,6 @@
                 try {
                     setLoading(true);
                     
-                    // FIXED: Removed 'mode: no-cors' to allow reading responses
                     const response = await fetch(googleScriptUrl, {
                         method: 'POST',
                         headers: {
@@ -905,13 +906,11 @@
                         })
                     });
 
-                    // FIXED: Now we can actually read the response!
                     const result = await response.json();
                     
                     if (result.success) {
                         console.log('Success:', action, result.message || 'OK');
                         
-                        // Reload data after mutations to get fresh data
                         if (action !== 'getAllVisits') {
                             await loadDataFromGoogle();
                         }
@@ -931,10 +930,8 @@
                 }
             };
 
-            // FIXED: Improved data loading with better error handling
             const loadDataFromGoogle = async () => {
                 if (!googleScriptUrl) {
-                    // Load from local storage if no Google Sheets
                     const savedVisits = localStorage.getItem('ptVisits');
                     if (savedVisits) {
                         try {
@@ -955,7 +952,6 @@
                 try {
                     setLoading(true);
                     
-                    // FIXED: Use GET request with proper URL parameter
                     const response = await fetch(googleScriptUrl + '?action=getAllVisits');
                     const result = await response.json();
                     
@@ -968,7 +964,6 @@
                         }));
                         setVisits(visitsWithDates);
                         
-                        // Also save to local storage as backup
                         localStorage.setItem('ptVisits', JSON.stringify(visitsWithDates));
                         
                         console.log('Loaded', visitsWithDates.length, 'visits from Google Sheets');
@@ -979,7 +974,6 @@
                 } catch (error) {
                     console.error('Error loading data from Google Sheets:', error);
                     
-                    // Fallback to local storage if Google Sheets fails
                     const savedVisits = localStorage.getItem('ptVisits');
                     if (savedVisits) {
                         try {
@@ -1029,16 +1023,12 @@
                     recordedAt: new Date()
                 };
 
-                // Save to Google Sheets
                 const result = await callGoogleScript('addVisit', { visit: newVisit });
                 
-                // Only update local state if Google Sheets succeeded
                 if (result && result.success) {
-                    // Data will be reloaded by callGoogleScript
                     setRegNumber('');
                     setNextVisitDate('');
                 } else {
-                    // If Google Sheets fails, save locally as backup
                     const updatedVisits = [newVisit, ...visits];
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
@@ -1049,10 +1039,8 @@
 
             const deleteVisit = async (id) => {
                 if (confirm('Are you sure you want to delete this entry?')) {
-                    // Delete from Google Sheets
                     await callGoogleScript('deleteVisit', { id });
                     
-                    // Update local state
                     const updatedVisits = visits.filter(v => v.id !== id);
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
@@ -1083,10 +1071,8 @@
                         completedAt: !visit.completed ? new Date() : null
                     };
                     
-                    // Update Google Sheets
                     await callGoogleScript('updateVisit', { visit: updatedVisit });
                     
-                    // Update local state
                     const updatedVisits = visits.map(v => 
                         v.id === id ? updatedVisit : v
                     );
@@ -1122,7 +1108,8 @@
                 setShowMonthView(true);
             };
 
-            const getMonthDatesDetailed = (monthIndex) => {
+            // OPTIMIZATION: Only calculate detailed dates when month view is open
+            const getMonthDatesDetailed = useCallback((monthIndex) => {
                 const year = new Date().getFullYear();
                 const firstDay = new Date(year, monthIndex, 1);
                 const lastDay = new Date(year, monthIndex + 1, 0);
@@ -1138,13 +1125,18 @@
                         return visitDate.getTime() === date.getTime() && !visit.completed;
                     });
                     
+                    // Get unique patient count for this date
+                    const uniquePatients = new Set(
+                        patientsForDate.map(v => v.regNumber.trim().toUpperCase())
+                    );
+                    
                     const holiday = getHolidayForDate(date);
                     
                     dates.push({
                         date: date,
                         day: day,
                         dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-                        count: patientsForDate.length,
+                        count: uniquePatients.size,
                         patients: patientsForDate,
                         holiday: holiday,
                         isToday: date.getTime() === new Date().setHours(0, 0, 0, 0),
@@ -1153,64 +1145,52 @@
                 }
                 
                 return dates;
-            };
+            }, [visits]);
 
-            const getMonthDates = () => {
+            const getNext6Visits = () => {
                 const today = new Date();
-                const year = today.getFullYear();
-                const month = today.getMonth();
+                today.setHours(0, 0, 0, 0);
                 
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
+                const result = [];
                 
-                const dates = [];
-                for (let day = 1; day <= lastDay.getDate(); day++) {
-                    const date = new Date(year, month, day);
-                    date.setHours(0, 0, 0, 0);
+                for (let i = 1; i <= 6; i++) {
+                    const nextDate = new Date(today);
+                    nextDate.setDate(today.getDate() + i);
                     
-                    const count = visits.filter(visit => {
-                        const visitDate = new Date(visit.nextVisitDate);
-                        visitDate.setHours(0, 0, 0, 0);
-                        return visitDate.getTime() === date.getTime() && !visit.completed;
-                    }).length;
+                    const count = getUniquePatientsForDate(nextDate);
                     
-                    dates.push({
-                        date: date,
-                        day: day,
+                    result.push({
+                        day: nextDate.getDate(),
+                        month: nextDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
                         count: count,
-                        isToday: date.getTime() === new Date().setHours(0, 0, 0, 0)
+                        fullDate: nextDate
                     });
                 }
                 
-                return dates;
+                return result;
             };
 
-            const getYearData = () => {
-                const year = new Date().getFullYear();
-                const months = [];
+            // LOOKUP FEATURE: Filter and search patient records
+            const filteredLookupVisits = useMemo(() => {
+                if (!lookupSearch.trim()) return visits;
                 
-                for (let month = 0; month < 12; month++) {
-                    const count = visits.filter(visit => {
-                        const visitDate = new Date(visit.nextVisitDate);
-                        return visitDate.getFullYear() === year && 
-                               visitDate.getMonth() === month && 
-                               !visit.completed;
-                    }).length;
-                    
-                    months.push({
-                        name: new Date(year, month, 1).toLocaleDateString('en-US', { month: 'short' }),
-                        fullName: new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' }),
-                        count: count,
-                        month: month
-                    });
-                }
-                
-                return months;
-            };
+                const searchTerm = lookupSearch.trim().toUpperCase();
+                return visits.filter(visit => 
+                    visit.regNumber.toUpperCase().includes(searchTerm)
+                );
+            }, [visits, lookupSearch]);
 
-            const getAllVisits = () => {
-                return [...visits].sort((a, b) => a.nextVisitDate - b.nextVisitDate);
-            };
+            // LOOKUP FEATURE: Get patient statistics
+            const lookupStats = useMemo(() => {
+                const uniquePatients = new Set(
+                    visits.map(v => v.regNumber.trim().toUpperCase())
+                );
+                
+                return {
+                    totalEntries: visits.length,
+                    uniquePatients: uniquePatients.size
+                };
+            }, [visits]);
 
             const openModalForDate = (date) => {
                 setSelectedDate(date);
@@ -1230,17 +1210,13 @@
             };
 
             const getPendingTodayCount = () => {
-                return getTodayPatients().filter(v => !v.completed).length;
-            };
-
-            const getVisitsByMonth = (monthIndex) => {
-                const currentYear = new Date().getFullYear();
-                return visits.filter(visit => {
-                    const nextDate = visit.nextVisitDate;
-                    return nextDate.getMonth() === monthIndex && 
-                           (nextDate.getFullYear() === currentYear || nextDate.getFullYear() === currentYear + 1) &&
-                           !visit.completed;
-                });
+                const todayPatients = getTodayPatients();
+                const uniquePatients = new Set(
+                    todayPatients
+                        .filter(v => !v.completed)
+                        .map(v => v.regNumber.trim().toUpperCase())
+                );
+                return uniquePatients.size;
             };
 
             const formatDate = (date) => {
@@ -1249,56 +1225,6 @@
                     day: 'numeric',
                     year: 'numeric'
                 });
-            };
-
-            const getTodayDate = () => {
-                const today = new Date();
-                return today.toLocaleDateString('en-US', { 
-                    weekday: 'long',
-                    month: 'long', 
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-            };
-
-            const getUpcomingVisits = () => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                return visits.filter(visit => {
-                    const nextDate = new Date(visit.nextVisitDate);
-                    nextDate.setHours(0, 0, 0, 0);
-                    return nextDate >= today && !visit.completed;
-                }).length;
-            };
-
-            const getNext6Visits = () => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const result = [];
-                
-                // Generate next 6 consecutive dates
-                for (let i = 1; i <= 6; i++) {
-                    const nextDate = new Date(today);
-                    nextDate.setDate(today.getDate() + i);
-                    
-                    // Count patients for this specific date
-                    const count = visits.filter(visit => {
-                        const visitDate = new Date(visit.nextVisitDate);
-                        visitDate.setHours(0, 0, 0, 0);
-                        return visitDate.getTime() === nextDate.getTime() && !visit.completed;
-                    }).length;
-                    
-                    result.push({
-                        day: nextDate.getDate(),
-                        month: nextDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-                        count: count,
-                        fullDate: nextDate
-                    });
-                }
-                
-                return result;
             };
 
             const todayPatients = getTodayPatients();
@@ -1384,6 +1310,82 @@
                         </div>
                     )}
 
+                    {/* LOOKUP MODAL */}
+                    {showLookup && (
+                        <div className="modal-overlay" onClick={() => setShowLookup(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '800px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">🔍 Look Up Patient Records</div>
+                                    <button className="modal-close" onClick={() => setShowLookup(false)}>×</button>
+                                </div>
+                                
+                                <div className="lookup-stats">
+                                    <div className="lookup-stat">
+                                        <div className="lookup-stat-value">{lookupStats.uniquePatients}</div>
+                                        <div className="lookup-stat-label">Unique Patients</div>
+                                    </div>
+                                    <div className="lookup-stat">
+                                        <div className="lookup-stat-value">{lookupStats.totalEntries}</div>
+                                        <div className="lookup-stat-label">Total Entries</div>
+                                    </div>
+                                </div>
+
+                                <div className="search-box">
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Search by registration number..."
+                                        value={lookupSearch}
+                                        onChange={(e) => setLookupSearch(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+                                
+                                <div className="patient-list" style={{maxHeight: '400px'}}>
+                                    {filteredLookupVisits.length === 0 ? (
+                                        <div className="empty-state">
+                                            <div className="empty-state-icon">📋</div>
+                                            <p>No records found</p>
+                                        </div>
+                                    ) : (
+                                        filteredLookupVisits.map(visit => (
+                                            <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
+                                                <div className="patient-info">
+                                                    <div className="patient-reg">{visit.regNumber}</div>
+                                                    <div className="patient-date">
+                                                        Next: {formatDate(visit.nextVisitDate)}
+                                                        {visit.completed && ' - Completed ✓'}
+                                                    </div>
+                                                    <div className="patient-date" style={{fontSize: '0.75rem', marginTop: '0.25rem'}}>
+                                                        Recorded: {formatDate(visit.recordedAt)}
+                                                    </div>
+                                                </div>
+                                                <div className="patient-actions">
+                                                    <button 
+                                                        className="btn btn-danger btn-small"
+                                                        onClick={() => deleteVisit(visit.id)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {visits.length > 0 && (
+                                    <button 
+                                        className="btn btn-danger" 
+                                        onClick={clearAllData}
+                                        style={{width: '100%', marginTop: '1rem'}}
+                                    >
+                                        Clear All Data
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <header className="header">
                         <h1>PT Tablet Follow-up</h1>
                         <p>Track tablet distribution and manage 2-month follow-up schedules</p>
@@ -1414,12 +1416,12 @@
                             style={{background: 'linear-gradient(135deg, var(--secondary) 0%, #00aa70 100%)', color: 'white', border: 'none'}}
                         >
                             <div className="stat-date" style={{fontSize: '0.75rem', marginBottom: '0.5rem', marginTop: 0, color: 'white', opacity: 0.9}}>
-                                Total Today
+                                Unique Patients Today
                             </div>
                             <div className="stat-value" style={{fontSize: '3.5rem', color: 'white'}}>
                                 {pendingToday}
                             </div>
-                            <div className="stat-label" style={{fontSize: '0.85rem', color: 'white', opacity: 0.9}}>Patients</div>
+                            <div className="stat-label" style={{fontSize: '0.85rem', color: 'white', opacity: 0.9}}>Pending Follow-ups</div>
                         </div>
                         <div 
                             className="stat-card clickable" 
@@ -1509,14 +1511,34 @@
                                     />
                                 </div>
 
-                                <button type="submit" className="btn btn-primary" style={{width: '100%'}}>
+                                <button type="submit" className="btn btn-primary" style={{width: '100%', marginBottom: '1rem'}}>
                                     Add Next Visit
+                                </button>
+
+                                <button 
+                                    type="button"
+                                    className="btn btn-lookup" 
+                                    onClick={() => setShowLookup(true)}
+                                    style={{width: '100%'}}
+                                >
+                                    🔍 Look Up Patient Records
                                 </button>
                             </form>
 
                             {visits.length > 0 && (
                                 <>
-                                    <h3 className="card-title" style={{marginTop: '2rem'}}>All Entries</h3>
+                                    <h3 className="card-title" style={{marginTop: '2rem'}}>Recent Entries</h3>
+                                    <div style={{
+                                        background: 'var(--bg-main)',
+                                        padding: '0.75rem',
+                                        borderRadius: '8px',
+                                        marginBottom: '1rem',
+                                        fontSize: '0.85rem',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        Showing {Math.min(15, visits.length)} of {visits.length} total entries. 
+                                        Use <strong>Look Up</strong> button to search and manage all records.
+                                    </div>
                                     <div className="patient-list">
                                         {visits.slice(0, 15).map(visit => (
                                             <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
@@ -1524,24 +1546,9 @@
                                                     <div className="patient-reg">{visit.regNumber}</div>
                                                     <div className="patient-date">Next: {formatDate(visit.nextVisitDate)}</div>
                                                 </div>
-                                                <div className="patient-actions">
-                                                    <button 
-                                                        className="btn btn-danger btn-small"
-                                                        onClick={() => deleteVisit(visit.id)}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
                                             </div>
                                         ))}
                                     </div>
-                                    <button 
-                                        className="btn btn-danger" 
-                                        onClick={clearAllData}
-                                        style={{width: '100%', marginTop: '1rem'}}
-                                    >
-                                        Clear All Data
-                                    </button>
                                 </>
                             )}
                         </div>
@@ -1550,8 +1557,7 @@
                             <h2 className="card-title">2026 Calendar - Patient Follow-ups</h2>
                             <div className="calendar-year-grid">
                                 {MONTHS.map((month, index) => {
-                                    const monthVisits = getVisitsByMonth(index);
-                                    const monthTotal = monthVisits.length;
+                                    const uniquePatientCount = getUniquePatientsForMonth(index);
                                     const holidays = getHolidaysForMonth(index);
                                     
                                     return (
@@ -1561,11 +1567,14 @@
                                             onClick={() => openMonthView(index)}
                                         >
                                             <div className="calendar-month-header">{month}</div>
-                                            <div className="calendar-month-count">{monthTotal} Patients</div>
+                                            <div className="calendar-month-count">{uniquePatientCount}</div>
+                                            <div className="calendar-month-subcount">Unique Patients</div>
                                             {holidays.length > 0 && (
                                                 <div className="calendar-month-holidays">
                                                     {holidays.slice(0, 2).map((h, i) => (
-                                                        <div key={i} className="holiday-badge">{h.name}</div>
+                                                        <div key={i} className={`holiday-badge ${h.type === 'poya' ? 'poya' : ''}`}>
+                                                            {h.name}
+                                                        </div>
                                                     ))}
                                                     {holidays.length > 2 && <div className="holiday-more">+{holidays.length - 2} more</div>}
                                                 </div>
@@ -1636,47 +1645,66 @@
                                     <button className="modal-close" onClick={() => setShowYearView(false)}>×</button>
                                 </div>
                                 
-                                <h3 style={{marginBottom: '1rem', color: 'var(--primary)'}}>Patients by Month</h3>
-                                <div className="year-view-grid">
-                                    {getYearData().map((monthData) => (
-                                        <div 
-                                            key={monthData.month}
-                                            className="year-month-card"
-                                        >
-                                            <div className="year-month-name">{monthData.name}</div>
-                                            <div className="year-month-count">{monthData.count}</div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <h3 style={{marginTop: '2rem', marginBottom: '1rem', color: 'var(--primary)'}}>All Scheduled Visits</h3>
-                                <div className="year-data-list">
-                                    {getAllVisits().length === 0 ? (
-                                        <div className="empty-state">
-                                            <div className="empty-state-icon">📋</div>
-                                            <p>No visits scheduled</p>
-                                        </div>
-                                    ) : (
-                                        getAllVisits().map(visit => (
-                                            <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
-                                                <div className="patient-info">
-                                                    <div className="patient-reg">{visit.regNumber}</div>
-                                                    <div className="patient-date">
-                                                        Next: {formatDate(visit.nextVisitDate)} 
-                                                        {visit.completed && ' - Completed ✓'}
-                                                    </div>
+                                <h3 style={{marginBottom: '1rem', color: 'var(--primary)'}}>Unique Patients by Month</h3>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(6, 1fr)',
+                                    gap: '0.75rem',
+                                    marginTop: '1rem'
+                                }}>
+                                    {MONTHS.map((month, index) => {
+                                        const count = getUniquePatientsForMonth(index);
+                                        return (
+                                            <div 
+                                                key={month}
+                                                style={{
+                                                    background: 'var(--bg-main)',
+                                                    border: '2px solid var(--border)',
+                                                    borderRadius: '8px',
+                                                    padding: '1.25rem',
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                <div style={{
+                                                    fontSize: '1.1rem',
+                                                    fontWeight: 700,
+                                                    color: 'var(--primary)',
+                                                    marginBottom: '0.5rem',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.5px'
+                                                }}>
+                                                    {month.slice(0, 3)}
                                                 </div>
-                                                <div className="patient-actions">
-                                                    <button 
-                                                        className="btn btn-danger btn-small"
-                                                        onClick={() => deleteVisit(visit.id)}
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                <div style={{
+                                                    fontSize: '2rem',
+                                                    fontWeight: 700,
+                                                    color: 'var(--text-primary)'
+                                                }}>
+                                                    {count}
                                                 </div>
                                             </div>
-                                        ))
-                                    )}
+                                        );
+                                    })}
+                                </div>
+
+                                <div style={{
+                                    marginTop: '2rem',
+                                    padding: '1rem',
+                                    background: 'var(--bg-main)',
+                                    borderRadius: '8px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>
+                                        Total Unique Patients
+                                    </div>
+                                    <div style={{fontSize: '3rem', fontWeight: 700, color: 'var(--primary)'}}>
+                                        {uniquePatientCounts.total}
+                                    </div>
+                                    <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem'}}>
+                                        ({visits.length} total entries)
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1692,17 +1720,45 @@
                                     <button className="modal-close" onClick={() => setShowMonthCalendar(false)}>×</button>
                                 </div>
                                 
-                                <div className="month-calendar-grid">
-                                    {getMonthDates().map((dateInfo) => (
-                                        <div 
-                                            key={dateInfo.day}
-                                            className={`month-date-card ${dateInfo.isToday ? 'today' : ''}`}
-                                            onClick={() => openModalForDate(dateInfo.date)}
-                                        >
-                                            <div className="month-date-day">{dateInfo.day}</div>
-                                            <div className="month-date-count">{dateInfo.count} PT</div>
-                                        </div>
-                                    ))}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(7, 1fr)',
+                                    gap: '0.5rem',
+                                    marginTop: '1rem'
+                                }}>
+                                    {Array.from({length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}, (_, i) => {
+                                        const date = new Date(new Date().getFullYear(), new Date().getMonth(), i + 1);
+                                        const count = getUniquePatientsForDate(date);
+                                        const isToday = date.toDateString() === new Date().toDateString();
+                                        
+                                        return (
+                                            <div 
+                                                key={i}
+                                                onClick={() => openModalForDate(date)}
+                                                style={{
+                                                    background: isToday ? 'var(--primary)' : 'var(--bg-main)',
+                                                    border: '2px solid var(--border)',
+                                                    borderRadius: '8px',
+                                                    padding: '1rem',
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    color: isToday ? 'white' : 'inherit'
+                                                }}
+                                            >
+                                                <div style={{fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem'}}>
+                                                    {i + 1}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    color: isToday ? 'white' : 'var(--text-secondary)',
+                                                    opacity: isToday ? 0.9 : 1
+                                                }}>
+                                                    {count} PT
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -1722,34 +1778,42 @@
                                         <p>No patients scheduled for this date</p>
                                     </div>
                                 ) : (
-                                    <div className="patient-list">
-                                        {modalPatients.map(visit => (
-                                            <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
-                                                <div className="patient-info">
-                                                    <div className="patient-reg">{visit.regNumber}</div>
-                                                    <div className="patient-date">
-                                                        {visit.completed ? 'Completed ✓' : 'Pending'}
+                                    <>
+                                        <div style={{
+                                            background: 'var(--bg-main)',
+                                            padding: '0.75rem',
+                                            borderRadius: '8px',
+                                            marginBottom: '1rem',
+                                            fontSize: '0.85rem',
+                                            color: 'var(--text-secondary)'
+                                        }}>
+                                            <strong>
+                                                {new Set(modalPatients.filter(v => !v.completed).map(v => v.regNumber.trim().toUpperCase())).size}
+                                            </strong> unique patients pending for this date
+                                        </div>
+                                        <div className="patient-list">
+                                            {modalPatients.map(visit => (
+                                                <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
+                                                    <div className="patient-info">
+                                                        <div className="patient-reg">{visit.regNumber}</div>
+                                                        <div className="patient-date">
+                                                            {visit.completed ? 'Completed ✓' : 'Pending'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="patient-actions">
+                                                        <div className="checkbox-wrapper">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="checkbox"
+                                                                checked={visit.completed}
+                                                                onChange={() => toggleCompleted(visit.id)}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="patient-actions">
-                                                    <div className="checkbox-wrapper">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="checkbox"
-                                                            checked={visit.completed}
-                                                            onChange={() => toggleCompleted(visit.id)}
-                                                        />
-                                                    </div>
-                                                    <button 
-                                                        className="btn btn-danger btn-small"
-                                                        onClick={() => deleteVisit(visit.id)}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
