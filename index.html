@@ -1256,16 +1256,6 @@
                 return result;
             };
 
-            // LOOKUP FEATURE: Filter and search patient records
-            const filteredLookupVisits = useMemo(() => {
-                if (!lookupSearch.trim()) return visits;
-                
-                const searchTerm = lookupSearch.trim().toUpperCase();
-                return visits.filter(visit => 
-                    visit.regNumber.toUpperCase().includes(searchTerm)
-                );
-            }, [visits, lookupSearch]);
-
             // LOOKUP FEATURE: Get patient statistics
             const lookupStats = useMemo(() => {
                 const uniquePatients = new Set(
@@ -1421,7 +1411,7 @@
                                     </div>
                                     <div className="lookup-stat">
                                         <div className="lookup-stat-value">{lookupStats.totalEntries}</div>
-                                        <div className="lookup-stat-label">Total Entries</div>
+                                        <div className="lookup-stat-label">Total Visit Entries</div>
                                     </div>
                                 </div>
 
@@ -1437,57 +1427,111 @@
                                 </div>
                                 
                                 <div className="patient-list" style={{maxHeight: '400px'}}>
-                                    {filteredLookupVisits.length === 0 ? (
-                                        <div className="empty-state">
-                                            <div className="empty-state-icon">📋</div>
-                                            <p>No records found</p>
-                                        </div>
-                                    ) : (
-                                        filteredLookupVisits.map(visit => {
-                                            const totalTablets = getPatientTotalTablets(visit.regNumber);
+                                    {(() => {
+                                        // Filter patients based on search
+                                        const filteredPatients = Object.values(patientTabletData).filter(patient =>
+                                            !lookupSearch.trim() || 
+                                            patient.regNumber.toUpperCase().includes(lookupSearch.trim().toUpperCase())
+                                        );
+                                        
+                                        if (filteredPatients.length === 0) {
                                             return (
-                                                <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
-                                                    <div className="patient-info">
-                                                        <div className="patient-reg">{visit.regNumber}</div>
-                                                        <div className="patient-date">
-                                                            Visit: {formatDate(visit.visitDate)} → Next: {formatDate(visit.nextVisitDate)}
-                                                        </div>
-                                                        <div className="patient-date" style={{fontSize: '0.75rem', marginTop: '0.25rem'}}>
-                                                            Recorded: {formatDate(visit.recordedAt)}
-                                                        </div>
-                                                        <div style={{
-                                                            marginTop: '0.5rem',
-                                                            display: 'flex',
-                                                            gap: '1rem',
-                                                            fontSize: '0.8rem'
-                                                        }}>
-                                                            <span style={{color: 'var(--secondary)', fontWeight: 600}}>
-                                                                📊 This visit: {visit.tabletDays} days
-                                                            </span>
-                                                            <span style={{color: 'var(--primary)', fontWeight: 600}}>
-                                                                💊 Total: {totalTablets} days
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="patient-actions">
-                                                        <button 
-                                                            className="btn btn-secondary btn-small"
-                                                            onClick={() => openPatientHistory(visit.regNumber)}
-                                                            style={{marginRight: '0.5rem'}}
-                                                        >
-                                                            History
-                                                        </button>
-                                                        <button 
-                                                            className="btn btn-danger btn-small"
-                                                            onClick={() => deleteVisit(visit.id)}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
+                                                <div className="empty-state">
+                                                    <div className="empty-state-icon">📋</div>
+                                                    <p>No patients found</p>
                                                 </div>
                                             );
-                                        })
-                                    )}
+                                        }
+                                        
+                                        return filteredPatients
+                                            .sort((a, b) => new Date(b.lastVisitDate) - new Date(a.lastVisitDate))
+                                            .map(patient => {
+                                                const latestVisit = patient.visits[patient.visits.length - 1];
+                                                const pendingVisits = patient.visits.filter(v => !v.completed).length;
+                                                
+                                                return (
+                                                    <div key={patient.regNumber} className="patient-item" style={{
+                                                        border: '2px solid var(--border)',
+                                                        background: 'white'
+                                                    }}>
+                                                        <div className="patient-info">
+                                                            <div className="patient-reg">{patient.regNumber}</div>
+                                                            <div className="patient-date">
+                                                                Latest visit: {formatDate(latestVisit.visitDate)} → Next: {formatDate(latestVisit.nextVisitDate)}
+                                                            </div>
+                                                            <div className="patient-date" style={{fontSize: '0.75rem', marginTop: '0.25rem'}}>
+                                                                First visit: {formatDate(patient.firstVisitDate)}
+                                                            </div>
+                                                            <div style={{
+                                                                marginTop: '0.75rem',
+                                                                display: 'grid',
+                                                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                                                gap: '0.5rem',
+                                                                fontSize: '0.8rem'
+                                                            }}>
+                                                                <div style={{
+                                                                    background: '#e3f2fd',
+                                                                    padding: '0.5rem',
+                                                                    borderRadius: '6px',
+                                                                    textAlign: 'center'
+                                                                }}>
+                                                                    <div style={{fontWeight: 700, color: 'var(--primary)', fontSize: '1.2rem'}}>
+                                                                        {patient.totalTabletDays}
+                                                                    </div>
+                                                                    <div style={{fontSize: '0.7rem', color: 'var(--text-secondary)'}}>
+                                                                        Total Tablets
+                                                                    </div>
+                                                                </div>
+                                                                <div style={{
+                                                                    background: '#f3e5f5',
+                                                                    padding: '0.5rem',
+                                                                    borderRadius: '6px',
+                                                                    textAlign: 'center'
+                                                                }}>
+                                                                    <div style={{fontWeight: 700, color: '#9c27b0', fontSize: '1.2rem'}}>
+                                                                        {patient.visits.length}
+                                                                    </div>
+                                                                    <div style={{fontSize: '0.7rem', color: 'var(--text-secondary)'}}>
+                                                                        Total Visits
+                                                                    </div>
+                                                                </div>
+                                                                <div style={{
+                                                                    background: pendingVisits > 0 ? '#fff3e0' : '#e8f5e9',
+                                                                    padding: '0.5rem',
+                                                                    borderRadius: '6px',
+                                                                    textAlign: 'center'
+                                                                }}>
+                                                                    <div style={{fontWeight: 700, color: pendingVisits > 0 ? '#f57c00' : '#2e7d32', fontSize: '1.2rem'}}>
+                                                                        {pendingVisits}
+                                                                    </div>
+                                                                    <div style={{fontSize: '0.7rem', color: 'var(--text-secondary)'}}>
+                                                                        Pending
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="patient-actions" style={{flexDirection: 'column', gap: '0.5rem'}}>
+                                                            <button 
+                                                                className="btn btn-primary btn-small"
+                                                                onClick={() => openPatientHistory(patient.regNumber)}
+                                                            >
+                                                                View History
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-danger btn-small"
+                                                                onClick={() => {
+                                                                    if (confirm(`Delete all ${patient.visits.length} visits for ${patient.regNumber}?`)) {
+                                                                        patient.visits.forEach(visit => deleteVisit(visit.id));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Delete All
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                    })()}
                                 </div>
 
                                 {visits.length > 0 && (
@@ -1730,23 +1774,49 @@
                                         fontSize: '0.85rem',
                                         color: 'var(--text-secondary)'
                                     }}>
-                                        Showing {Math.min(15, visits.length)} of {visits.length} total entries. 
-                                        Use <strong>Look Up</strong> button to search and manage all records.
+                                        Showing latest visit for each patient. 
+                                        Use <strong>Look Up</strong> button to view complete history.
                                     </div>
                                     <div className="patient-list">
-                                        {visits.slice(0, 15).map(visit => (
-                                            <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
-                                                <div className="patient-info">
-                                                    <div className="patient-reg">{visit.regNumber}</div>
-                                                    <div className="patient-date">
-                                                        Visit: {formatDate(visit.visitDate)} → Next: {formatDate(visit.nextVisitDate)}
+                                        {Object.values(patientTabletData)
+                                            .sort((a, b) => new Date(b.lastVisitDate) - new Date(a.lastVisitDate))
+                                            .slice(0, 15)
+                                            .map(patient => {
+                                                const latestVisit = patient.visits[patient.visits.length - 1];
+                                                return (
+                                                    <div key={patient.regNumber} className={`patient-item ${latestVisit.completed ? 'completed' : ''}`}>
+                                                        <div className="patient-info">
+                                                            <div className="patient-reg">{patient.regNumber}</div>
+                                                            <div className="patient-date">
+                                                                Latest: {formatDate(latestVisit.visitDate)} → Next: {formatDate(latestVisit.nextVisitDate)}
+                                                            </div>
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                gap: '1rem',
+                                                                marginTop: '0.5rem',
+                                                                fontSize: '0.8rem'
+                                                            }}>
+                                                                <span style={{color: 'var(--secondary)', fontWeight: 600}}>
+                                                                    📊 Last visit: {latestVisit.tabletDays} days
+                                                                </span>
+                                                                <span style={{color: 'var(--primary)', fontWeight: 600}}>
+                                                                    💊 Total: {patient.totalTabletDays} days
+                                                                </span>
+                                                                <span style={{color: 'var(--text-secondary)'}}>
+                                                                    🔢 {patient.visits.length} visits
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            className="btn btn-secondary btn-small"
+                                                            onClick={() => openPatientHistory(patient.regNumber)}
+                                                        >
+                                                            View History
+                                                        </button>
                                                     </div>
-                                                    <div className="patient-date" style={{marginTop: '0.25rem', color: 'var(--secondary)', fontWeight: 600}}>
-                                                        📊 {visit.tabletDays} days tablets
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                                );
+                                            })
+                                        }
                                     </div>
                                 </>
                             )}
