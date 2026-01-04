@@ -923,7 +923,8 @@
                             totalTabletDays: 0,
                             visits: [],
                             firstVisitDate: visit.visitDate,
-                            lastVisitDate: visit.visitDate
+                            lastVisitDate: visit.visitDate,
+                            lastNextVisitDate: visit.nextVisitDate
                         };
                     }
 
@@ -936,6 +937,10 @@
                     }
                     if (new Date(visit.visitDate) > new Date(patientData[regNum].lastVisitDate)) {
                         patientData[regNum].lastVisitDate = visit.visitDate;
+                    }
+                    // Track the last scheduled next visit date
+                    if (new Date(visit.nextVisitDate) > new Date(patientData[regNum].lastNextVisitDate)) {
+                        patientData[regNum].lastNextVisitDate = visit.nextVisitDate;
                     }
                 });
 
@@ -2433,7 +2438,10 @@
                                         Treatment Duration
                                     </div>
                                     <div style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--secondary)'}}>
-                                        {formatDate(selectedPatient.firstVisitDate)} to {formatDate(selectedPatient.lastVisitDate)}
+                                        {formatDate(selectedPatient.firstVisitDate)} to {formatDate(selectedPatient.lastNextVisitDate)}
+                                    </div>
+                                    <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem'}}>
+                                        ({Math.ceil((new Date(selectedPatient.lastNextVisitDate) - new Date(selectedPatient.firstVisitDate)) / (1000 * 60 * 60 * 24))} days)
                                     </div>
                                 </div>
                             </div>
