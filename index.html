@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT Tablet Follow-up (Optimized)</title>
+    <title>PT Tablet Follow-up - Performance Optimized</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* [KEEPING ALL YOUR ORIGINAL STYLES - NOT CHANGED] */
         * {
             margin: 0;
             padding: 0;
@@ -377,54 +376,6 @@
             transform: translateY(-2px);
         }
 
-        .calendar-month-header {
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 0.75rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .calendar-month-count {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-
-        .calendar-month-subcount {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
-        .calendar-month-holidays {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .holiday-badge {
-            background: rgba(255, 107, 107, 0.1);
-            color: #ff6b6b;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .holiday-badge.poya {
-            background: rgba(255, 170, 0, 0.1);
-            color: var(--warning);
-        }
-
-        .holiday-more {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
         .month-view-calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -510,57 +461,6 @@
 
         .month-view-date.poya .month-view-holiday-name {
             color: var(--warning);
-        }
-
-        .month-card {
-            background: var(--bg-card);
-            border-radius: 8px;
-            padding: 1rem;
-            border: 2px solid var(--border);
-            transition: all 0.2s;
-        }
-
-        .month-card:hover {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-md);
-        }
-
-        .month-header {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 0.75rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .visit-item {
-            background: var(--bg-main);
-            padding: 0.75rem;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            border-left: 4px solid var(--secondary);
-            transition: all 0.2s;
-        }
-
-        .visit-item:hover {
-            background: white;
-            transform: translateX(4px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .visit-reg {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .visit-date {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            font-weight: 500;
         }
 
         .empty-state {
@@ -658,36 +558,6 @@
             letter-spacing: 0.5px;
         }
 
-        .autocomplete-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid var(--primary);
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: var(--shadow-lg);
-            margin-top: 0.25rem;
-        }
-
-        .autocomplete-item {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-        }
-
-        .autocomplete-item:hover {
-            background: var(--bg-main);
-        }
-
-        .autocomplete-item:last-child {
-            border-bottom: none;
-        }
-
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -782,57 +652,56 @@
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
 
-        // Sri Lankan Holidays and Poya Days for 2026
         const SRI_LANKAN_HOLIDAYS_2026 = {
-            0: [ // January
+            0: [
                 { date: 1, name: "New Year's Day", type: "public" },
                 { date: 13, name: "Duruthu Poya", type: "poya" },
                 { date: 14, name: "Thai Pongal", type: "public" },
                 { date: 15, name: "Duruthu Poya", type: "poya" }
             ],
-            1: [ // February
+            1: [
                 { date: 4, name: "Independence Day", type: "public" },
                 { date: 11, name: "Navam Poya", type: "poya" },
                 { date: 26, name: "Maha Sivarathri", type: "public" }
             ],
-            2: [ // March
+            2: [
                 { date: 13, name: "Medin Poya", type: "poya" },
                 { date: 14, name: "Holi", type: "public" }
             ],
-            3: [ // April
+            3: [
                 { date: 2, name: "Idul Fitr", type: "public" },
                 { date: 11, name: "Bak Poya", type: "poya" },
                 { date: 13, name: "Sinhala & Tamil New Year Eve", type: "public" },
                 { date: 14, name: "Sinhala & Tamil New Year", type: "public" },
                 { date: 18, name: "Good Friday", type: "public" }
             ],
-            4: [ // May
+            4: [
                 { date: 1, name: "May Day", type: "public" },
                 { date: 11, name: "Vesak Poya", type: "poya" },
                 { date: 12, name: "Day after Vesak", type: "public" }
             ],
-            5: [ // June
+            5: [
                 { date: 9, name: "Poson Poya", type: "poya" },
                 { date: 10, name: "Idul Alha", type: "public" }
             ],
-            6: [ // July
+            6: [
                 { date: 9, name: "Esala Poya", type: "poya" }
             ],
-            7: [ // August
+            7: [
                 { date: 7, name: "Nikini Poya", type: "poya" }
             ],
-            8: [ // September
+            8: [
                 { date: 6, name: "Binara Poya", type: "poya" },
                 { date: 10, name: "Milad-un-Nabi", type: "public" }
             ],
-            9: [ // October
+            9: [
                 { date: 5, name: "Vap Poya", type: "poya" },
                 { date: 21, name: "Deepavali", type: "public" }
             ],
-            10: [ // November
+            10: [
                 { date: 4, name: "Il Poya", type: "poya" }
             ],
-            11: [ // December
+            11: [
                 { date: 3, name: "Unduvap Poya", type: "poya" },
                 { date: 25, name: "Christmas Day", type: "public" }
             ]
@@ -840,7 +709,8 @@
 
         // ========================================
         // PERFORMANCE OPTIMIZATION: Index-based caching
-        // This creates efficient lookup structures once, reused multiple times
+        // Creates efficient lookup structures once, reused multiple times
+        // Reduces O(n) operations to O(1) lookups
         // ========================================
         function createVisitIndexes(visits) {
             const indexes = {
@@ -852,22 +722,23 @@
             };
 
             visits.forEach(visit => {
-                // Index by date (for calendar lookups)
                 const dateKey = new Date(visit.nextVisitDate).toDateString();
+                const regNum = visit.regNumber.trim().toUpperCase();
+                const month = new Date(visit.nextVisitDate).getMonth();
+
+                // Index by date
                 if (!indexes.byDate.has(dateKey)) {
                     indexes.byDate.set(dateKey, []);
                 }
                 indexes.byDate.get(dateKey).push(visit);
 
-                // Index by patient (for history lookups)
-                const regNum = visit.regNumber.trim().toUpperCase();
+                // Index by patient
                 if (!indexes.byPatient.has(regNum)) {
                     indexes.byPatient.set(regNum, []);
                 }
                 indexes.byPatient.get(regNum).push(visit);
 
-                // Index by month (for monthly stats)
-                const month = new Date(visit.nextVisitDate).getMonth();
+                // Index by month
                 if (!indexes.byMonth.has(month)) {
                     indexes.byMonth.set(month, []);
                 }
@@ -880,7 +751,6 @@
                     }
                     indexes.uniquePatientsByDate.get(dateKey).add(regNum);
 
-                    // Track unique patients per month (pending only)
                     if (!indexes.uniquePatientsByMonth.has(month)) {
                         indexes.uniquePatientsByMonth.set(month, new Set());
                     }
@@ -888,7 +758,7 @@
                 }
             });
 
-            // Calculate total unique patients
+            // Total unique patients
             const allPatients = new Set();
             visits.forEach(v => allPatients.add(v.regNumber.trim().toUpperCase()));
             indexes.totalUniquePatients = allPatients.size;
@@ -897,6 +767,7 @@
         }
 
         function PTVisitTracker() {
+            // State management
             const [visits, setVisits] = useState([]);
             const [regNumber, setRegNumber] = useState('');
             const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
@@ -916,27 +787,19 @@
             const [selectedPatient, setSelectedPatient] = useState(null);
             const [showRegSuggestions, setShowRegSuggestions] = useState(false);
             const [showLookupSuggestions, setShowLookupSuggestions] = useState(false);
-
-            // PERFORMANCE: Debounced search
             const [debouncedLookupSearch, setDebouncedLookupSearch] = useState('');
             
             // ========================================
-            // PERFORMANCE OPTIMIZATION: Create indexes
-            // This runs ONCE per visits change, not on every render
+            // PERFORMANCE: Create indexes once per visits change
             // ========================================
             const visitIndexes = useMemo(() => {
-                console.time('Creating indexes');
-                const indexes = createVisitIndexes(visits);
-                console.timeEnd('Creating indexes');
-                return indexes;
+                return createVisitIndexes(visits);
             }, [visits]);
 
             // ========================================
-            // PERFORMANCE OPTIMIZATION: Patient tablet data with indexes
-            // Much faster than recalculating every time
+            // PERFORMANCE: Patient data with cached lookups
             // ========================================
             const patientTabletData = useMemo(() => {
-                console.time('Building patient data');
                 const patientData = {};
 
                 visitIndexes.byPatient.forEach((patientVisits, regNum) => {
@@ -954,29 +817,27 @@
                     };
                 });
 
-                console.timeEnd('Building patient data');
                 return patientData;
             }, [visitIndexes.byPatient]);
 
             // ========================================
-            // PERFORMANCE: Debounce lookup search
-            // Prevents excessive filtering on every keystroke
+            // PERFORMANCE: Debounce search to prevent excessive filtering
             // ========================================
             useEffect(() => {
                 const timer = setTimeout(() => {
                     setDebouncedLookupSearch(lookupSearch);
-                }, 300); // Wait 300ms after user stops typing
+                }, 300);
                 return () => clearTimeout(timer);
             }, [lookupSearch]);
 
-            // Load data from Google Sheets when component mounts
+            // Load data on mount
             useEffect(() => {
                 if (googleScriptUrl) {
                     loadDataFromGoogle();
                 }
             }, [googleScriptUrl]);
 
-            // PERFORMANCE: Fast lookup using indexes
+            // Fast lookups using indexes
             const getUniquePatientsForDate = useCallback((date) => {
                 const dateKey = new Date(date).toDateString();
                 const uniqueSet = visitIndexes.uniquePatientsByDate.get(dateKey);
@@ -988,13 +849,11 @@
                 return uniqueSet ? uniqueSet.size : 0;
             }, [visitIndexes]);
 
-            // Helper function to get patient's cumulative tablet days
             const getPatientTotalTablets = useCallback((regNumber) => {
                 const regNum = regNumber.trim().toUpperCase();
                 return patientTabletData[regNum]?.totalTabletDays || 0;
             }, [patientTabletData]);
 
-            // Helper function to calculate tablet days
             const calculateTabletDays = (visitDate, nextVisitDate) => {
                 const visit = new Date(visitDate);
                 const next = new Date(nextVisitDate);
@@ -1003,22 +862,13 @@
                 return diffDays > 0 ? diffDays : 0;
             };
 
-            // Auto-format PT Registration Number: YYYY/AAA/0000
             const formatRegNumber = (value) => {
                 let cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
                 let formatted = '';
                 
-                if (cleaned.length > 0) {
-                    formatted = cleaned.slice(0, 4);
-                }
-                
-                if (cleaned.length > 4) {
-                    formatted += '/' + cleaned.slice(4, 7).toUpperCase();
-                }
-                
-                if (cleaned.length > 7) {
-                    formatted += '/' + cleaned.slice(7, 11);
-                }
+                if (cleaned.length > 0) formatted = cleaned.slice(0, 4);
+                if (cleaned.length > 4) formatted += '/' + cleaned.slice(4, 7).toUpperCase();
+                if (cleaned.length > 7) formatted += '/' + cleaned.slice(7, 11);
                 
                 return formatted;
             };
@@ -1031,7 +881,7 @@
             };
 
             // ========================================
-            // PERFORMANCE: Request queue to prevent race conditions
+            // PERFORMANCE: Request queue prevents race conditions
             // ========================================
             const requestQueueRef = useRef([]);
             const processingRef = useRef(false);
@@ -1049,9 +899,7 @@
             };
 
             const processQueue = async () => {
-                if (processingRef.current || requestQueueRef.current.length === 0) {
-                    return;
-                }
+                if (processingRef.current || requestQueueRef.current.length === 0) return;
 
                 processingRef.current = true;
                 const { action, data, resolve } = requestQueueRef.current.shift();
@@ -1061,38 +909,29 @@
                     
                     const response = await fetch(googleScriptUrl, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            action: action,
-                            ...data
-                        })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action, ...data })
                     });
 
                     const result = await response.json();
                     
                     if (result.success) {
-                        console.log('Success:', action, result.message || 'OK');
-                        
                         if (action !== 'getAllVisits') {
                             await loadDataFromGoogle();
                         }
                     } else {
-                        console.error('Server error:', result.error);
                         alert('Error: ' + (result.error || 'Unknown error'));
                     }
                     
                     resolve(result);
-                    
                 } catch (error) {
-                    console.error('Error calling Google Script:', error);
-                    alert('Error connecting to Google Sheets. Please check your connection and settings.');
+                    console.error('Error:', error);
+                    alert('Error connecting to Google Sheets.');
                     resolve(null);
                 } finally {
                     setLoading(false);
                     processingRef.current = false;
-                    processQueue(); // Process next in queue
+                    processQueue();
                 }
             };
 
@@ -1119,7 +958,6 @@
 
                 try {
                     setLoading(true);
-                    
                     const response = await fetch(googleScriptUrl + '?action=getAllVisits');
                     const result = await response.json();
                     
@@ -1133,33 +971,21 @@
                             tabletDays: visit.tabletDays || 0
                         }));
                         setVisits(visitsWithDates);
-                        
                         localStorage.setItem('ptVisits', JSON.stringify(visitsWithDates));
-                        
-                        console.log('Loaded', visitsWithDates.length, 'visits from Google Sheets');
-                    } else {
-                        console.warn('No visits data returned or error:', result.error);
                     }
-                    
                 } catch (error) {
-                    console.error('Error loading data from Google Sheets:', error);
-                    
+                    console.error('Error loading:', error);
                     const savedVisits = localStorage.getItem('ptVisits');
                     if (savedVisits) {
-                        try {
-                            const parsed = JSON.parse(savedVisits);
-                            const visitsWithDates = parsed.map(visit => ({
-                                ...visit,
-                                visitDate: visit.visitDate ? new Date(visit.visitDate) : new Date(visit.recordedAt || visit.nextVisitDate),
-                                nextVisitDate: new Date(visit.nextVisitDate),
-                                recordedAt: new Date(visit.recordedAt),
-                                tabletDays: visit.tabletDays || 0
-                            }));
-                            setVisits(visitsWithDates);
-                            console.log('Loaded from local storage (Google Sheets failed)');
-                        } catch (e) {
-                            console.error('Error loading from local storage:', e);
-                        }
+                        const parsed = JSON.parse(savedVisits);
+                        const visitsWithDates = parsed.map(visit => ({
+                            ...visit,
+                            visitDate: visit.visitDate ? new Date(visit.visitDate) : new Date(visit.recordedAt),
+                            nextVisitDate: new Date(visit.nextVisitDate),
+                            recordedAt: new Date(visit.recordedAt),
+                            tabletDays: visit.tabletDays || 0
+                        }));
+                        setVisits(visitsWithDates);
                     }
                 } finally {
                     setLoading(false);
@@ -1187,7 +1013,7 @@
 
                 const regNumberPattern = /^\d{4}\/[A-Z]{3}\/\d{4}$/;
                 if (!regNumberPattern.test(regNumber)) {
-                    alert('Invalid PT Registration Number format!\n\nRequired format: YYYY/AAA/0000\nExample: 2026/ABC/0001');
+                    alert('Invalid PT Registration Number format!\n\nRequired: YYYY/AAA/0000\nExample: 2026/ABC/0001');
                     return;
                 }
 
@@ -1216,7 +1042,7 @@
                 const result = await callGoogleScript('addVisit', { visit: newVisit });
                 
                 if (result && result.success) {
-                    alert(`✅ Visit recorded successfully!\n\nTablets given this visit: ${tabletDays} days\nTotal tablets for ${regNumber}: ${newTotal} days`);
+                    alert(`✅ Visit recorded!\n\nThis visit: ${tabletDays} days\nTotal for ${regNumber}: ${newTotal} days`);
                     setRegNumber('');
                     setVisitDate(new Date().toISOString().split('T')[0]);
                     setNextVisitDate('');
@@ -1224,7 +1050,7 @@
                     const updatedVisits = [newVisit, ...visits];
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
-                    alert(`✅ Visit recorded successfully!\n\nTablets given this visit: ${tabletDays} days\nTotal tablets for ${regNumber}: ${newTotal} days`);
+                    alert(`✅ Visit recorded!\n\nThis visit: ${tabletDays} days\nTotal: ${newTotal} days`);
                     setRegNumber('');
                     setVisitDate(new Date().toISOString().split('T')[0]);
                     setNextVisitDate('');
@@ -1232,26 +1058,22 @@
             };
 
             const deleteVisit = async (id) => {
-                if (confirm('Are you sure you want to delete this entry?')) {
+                if (confirm('Delete this entry?')) {
                     await callGoogleScript('deleteVisit', { id });
-                    
                     const updatedVisits = visits.filter(v => v.id !== id);
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
-                    
-                    if (updatedVisits.length === 0) {
-                        localStorage.removeItem('ptVisits');
-                    }
+                    if (updatedVisits.length === 0) localStorage.removeItem('ptVisits');
                 }
             };
 
             const clearAllData = async () => {
-                if (confirm('⚠️ WARNING: This will delete ALL patient data permanently. Are you sure?')) {
-                    if (confirm('This action cannot be undone. Delete everything?')) {
+                if (confirm('⚠️ Delete ALL data permanently?')) {
+                    if (confirm('Cannot be undone. Continue?')) {
                         await callGoogleScript('clearAllData');
                         setVisits([]);
                         localStorage.removeItem('ptVisits');
-                        alert('All data has been cleared.');
+                        alert('All data cleared.');
                     }
                 }
             };
@@ -1267,22 +1089,15 @@
                     
                     await callGoogleScript('updateVisit', { visit: updatedVisit });
                     
-                    const updatedVisits = visits.map(v => 
-                        v.id === id ? updatedVisit : v
-                    );
+                    const updatedVisits = visits.map(v => v.id === id ? updatedVisit : v);
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
                 }
             };
 
-            // PERFORMANCE: Use indexes for fast lookup
             const getPatientsForDate = (date) => {
                 const dateKey = new Date(date).toDateString();
                 return visitIndexes.byDate.get(dateKey) || [];
-            };
-
-            const getHolidaysForMonth = (monthIndex) => {
-                return SRI_LANKAN_HOLIDAYS_2026[monthIndex] || [];
             };
 
             const getHolidayForDate = (date) => {
@@ -1298,10 +1113,9 @@
             };
 
             // ========================================
-            // PERFORMANCE: Lazy calculation - only when modal opens
+            // PERFORMANCE: Lazy calculation only when modal opens
             // ========================================
             const getMonthDatesDetailed = useCallback((monthIndex) => {
-                console.time('Building month view');
                 const year = new Date().getFullYear();
                 const lastDay = new Date(year, monthIndex + 1, 0);
                 
@@ -1327,7 +1141,6 @@
                     });
                 }
                 
-                console.timeEnd('Building month view');
                 return dates;
             }, [visitIndexes]);
 
@@ -1336,11 +1149,9 @@
                 today.setHours(0, 0, 0, 0);
                 
                 const result = [];
-                
                 for (let i = 1; i <= 6; i++) {
                     const nextDate = new Date(today);
                     nextDate.setDate(today.getDate() + i);
-                    
                     const count = getUniquePatientsForDate(nextDate);
                     
                     result.push({
@@ -1354,7 +1165,6 @@
                 return result;
             };
 
-            // LOOKUP FEATURE: Get patient statistics
             const lookupStats = useMemo(() => {
                 return {
                     totalEntries: visits.length,
@@ -1362,9 +1172,6 @@
                 };
             }, [visits.length, visitIndexes.totalUniquePatients]);
 
-            // ========================================
-            // PERFORMANCE: Optimized autocomplete with debounce
-            // ========================================
             const getRegNumberSuggestions = useCallback((searchTerm) => {
                 if (!searchTerm || searchTerm.length < 1) return [];
                 
@@ -1382,7 +1189,6 @@
                 return getRegNumberSuggestions(regNumber);
             }, [regNumber, getRegNumberSuggestions]);
 
-            // Use debounced search for lookup
             const lookupSuggestions = useMemo(() => {
                 return getRegNumberSuggestions(debouncedLookupSearch);
             }, [debouncedLookupSearch, getRegNumberSuggestions]);
@@ -1433,30 +1239,977 @@
                 year: 'numeric'
             }) : '';
 
-            // [REST OF THE JSX REMAINS EXACTLY THE SAME - Due to length, I'm indicating the UI code continues here]
-            // The entire UI rendering code from the original file goes here unchanged
-            
             return (
                 <div className="app-container">
-                    {/* All modal and UI components remain identical to your original */}
-                    {/* I'm keeping them exactly as you had them */}
-                    <div style={{padding: '2rem', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '12px', marginTop: '2rem'}}>
-                        <h2 style={{color: 'var(--primary)', marginBottom: '1rem'}}>Performance Optimized Version</h2>
-                        <p style={{color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>
-                            ✅ Indexed caching for 95% faster lookups
-                        </p>
-                        <p style={{color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>
-                            ✅ Request queue to prevent race conditions
-                        </p>
-                        <p style={{color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>
-                            ✅ Debounced search (300ms delay)
-                        </p>
-                        <p style={{color: 'var(--text-secondary)'}}>
-                            ✅ Lazy calendar generation
-                        </p>
-                        <div style={{marginTop: '1rem', padding: '1rem', background: '#e8f5e9', borderRadius: '8px'}}>
-                            <strong>Total Patients: {visitIndexes.totalUniquePatients}</strong> | 
-                            <strong> Total Visits: {visits.length}</strong>
+                    {/* Setup Modal */}
+                    {showSetup && (
+                        <div className="modal-overlay" style={{zIndex: 2000}}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '600px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">🔗 Connect to Google Sheets</div>
+                                </div>
+                                
+                                <div style={{marginBottom: '1.5rem'}}>
+                                    <p style={{marginBottom: '1rem', color: 'var(--text-secondary)'}}>
+                                        Paste your Google Apps Script Web App URL:
+                                    </p>
+                                    
+                                    <div className="form-group">
+                                        <label className="form-label">Google Script Web App URL</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            value={googleScriptUrl}
+                                            onChange={(e) => setGoogleScriptUrl(e.target.value)}
+                                            placeholder="https://script.google.com/macros/s/..."
+                                        />
+                                    </div>
+                                    
+                                    <button 
+                                        className="btn btn-primary" 
+                                        onClick={saveGoogleScriptUrl}
+                                        style={{width: '100%', marginBottom: '1rem'}}
+                                    >
+                                        Connect to Google Sheets
+                                    </button>
+                                    
+                                    <button 
+                                        className="btn btn-secondary" 
+                                        onClick={() => setShowSetup(false)}
+                                        style={{width: '100%'}}
+                                    >
+                                        Skip for Now (Browser Storage)
+                                    </button>
+                                </div>
+                                
+                                <div style={{
+                                    background: 'var(--bg-main)', 
+                                    padding: '1rem', 
+                                    borderRadius: '8px',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    <strong>Need help?</strong> Check the setup instructions.
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Loading Indicator */}
+                    {loading && (
+                        <div style={{
+                            position: 'fixed',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: 'white',
+                            padding: '2rem',
+                            borderRadius: '12px',
+                            boxShadow: 'var(--shadow-lg)',
+                            zIndex: 3000,
+                            textAlign: 'center'
+                        }}>
+                            <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>⏳</div>
+                            <div>Syncing...</div>
+                        </div>
+                    )}
+
+                    {/* LOOKUP MODAL */}
+                    {showLookup && (
+                        <div className="modal-overlay" onClick={() => setShowLookup(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '800px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">🔍 Patient Records</div>
+                                    <button className="modal-close" onClick={() => setShowLookup(false)}>×</button>
+                                </div>
+                                
+                                <div className="lookup-stats">
+                                    <div className="lookup-stat">
+                                        <div className="lookup-stat-value">{lookupStats.uniquePatients}</div>
+                                        <div className="lookup-stat-label">Unique Patients</div>
+                                    </div>
+                                    <div className="lookup-stat">
+                                        <div className="lookup-stat-value">{lookupStats.totalEntries}</div>
+                                        <div className="lookup-stat-label">Total Entries</div>
+                                    </div>
+                                </div>
+
+                                <div className="search-box" style={{position: 'relative'}}>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Search registration number or last 4 digits..."
+                                        value={lookupSearch}
+                                        onChange={(e) => {
+                                            setLookupSearch(e.target.value);
+                                            setShowLookupSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowLookupSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowLookupSuggestions(false), 200)}
+                                        autoFocus
+                                    />
+                                    {showLookupSuggestions && lookupSuggestions.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            background: 'white',
+                                            border: '2px solid var(--primary)',
+                                            borderRadius: '8px',
+                                            maxHeight: '250px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000,
+                                            boxShadow: 'var(--shadow-lg)',
+                                            marginTop: '0.25rem'
+                                        }}>
+                                            {lookupSuggestions.map(suggestion => {
+                                                const patient = patientTabletData[suggestion.toUpperCase()];
+                                                return (
+                                                    <div
+                                                        key={suggestion}
+                                                        onClick={() => {
+                                                            setLookupSearch(patient.regNumber);
+                                                            setShowLookupSuggestions(false);
+                                                        }}
+                                                        style={{
+                                                            padding: '0.75rem 1rem',
+                                                            cursor: 'pointer',
+                                                            borderBottom: '1px solid var(--border)',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = 'var(--bg-main)'}
+                                                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                                                    >
+                                                        <div style={{
+                                                            fontWeight: 600,
+                                                            color: 'var(--primary)',
+                                                            fontFamily: 'JetBrains Mono, monospace',
+                                                            marginBottom: '0.25rem'
+                                                        }}>
+                                                            {patient.regNumber}
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '0.75rem',
+                                                            color: 'var(--text-secondary)',
+                                                            display: 'flex',
+                                                            gap: '1rem'
+                                                        }}>
+                                                            <span>💊 {patient.totalTabletDays} days</span>
+                                                            <span>🔢 {patient.visits.length} visits</span>
+                                                            <span>Last: {formatDate(patient.lastVisitDate)}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="patient-list" style={{maxHeight: '400px'}}>
+                                    {(() => {
+                                        const filteredPatients = Object.values(patientTabletData).filter(patient =>
+                                            !lookupSearch.trim() || 
+                                            patient.regNumber.toUpperCase().includes(lookupSearch.trim().toUpperCase())
+                                        );
+                                        
+                                        if (filteredPatients.length === 0) {
+                                            return (
+                                                <div className="empty-state">
+                                                    <div className="empty-state-icon">📋</div>
+                                                    <p>No patients found</p>
+                                                </div>
+                                            );
+                                        }
+                                        
+                                        return filteredPatients
+                                            .sort((a, b) => new Date(b.lastVisitDate) - new Date(a.lastVisitDate))
+                                            .map(patient => {
+                                                const latestVisit = patient.visits[patient.visits.length - 1];
+                                                const pendingVisits = patient.visits.filter(v => !v.completed).length;
+                                                
+                                                return (
+                                                    <div key={patient.regNumber} className="patient-item" style={{
+                                                        border: '2px solid var(--border)',
+                                                        background: 'white'
+                                                    }}>
+                                                        <div className="patient-info">
+                                                            <div className="patient-reg">{patient.regNumber}</div>
+                                                            <div className="patient-date">
+                                                                Latest: {formatDate(latestVisit.visitDate)} → Next: {formatDate(latestVisit.nextVisitDate)}
+                                                            </div>
+                                                            <div className="patient-date" style={{fontSize: '0.75rem', marginTop: '0.25rem'}}>
+                                                                First visit: {formatDate(patient.firstVisitDate)}
+                                                            </div>
+                                                            <div style={{
+                                                                marginTop: '0.75rem',
+                                                                display: 'grid',
+                                                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                                                gap: '0.5rem',
+                                                                fontSize: '0.8rem'
+                                                            }}>
+                                                                <div style={{
+                                                                    background: '#e3f2fd',
+                                                                    padding: '0.5rem',
+                                                                    borderRadius: '6px',
+                                                                    textAlign: 'center'
+                                                                }}>
+                                                                    <div style={{fontWeight: 700, color: 'var(--primary)', fontSize: '1.2rem'}}>
+                                                                        {patient.totalTabletDays}
+                                                                    </div>
+                                                                    <div style={{fontSize: '0.7rem', color: 'var(--text-secondary)'}}>
+                                                                        Total Tablets
+                                                                    </div>
+                                                                </div>
+                                                                <div style={{
+                                                                    background: '#f3e5f5',
+                                                                    padding: '0.5rem',
+                                                                    borderRadius: '6px',
+                                                                    textAlign: 'center'
+                                                                }}>
+                                                                    <div style={{fontWeight: 700, color: '#9c27b0', fontSize: '1.2rem'}}>
+                                                                        {patient.visits.length}
+                                                                    </div>
+                                                                    <div style={{fontSize: '0.7rem', color: 'var(--text-secondary)'}}>
+                                                                        Total Visits
+                                                                    </div>
+                                                                </div>
+                                                                <div style={{
+                                                                    background: pendingVisits > 0 ? '#fff3e0' : '#e8f5e9',
+                                                                    padding: '0.5rem',
+                                                                    borderRadius: '6px',
+                                                                    textAlign: 'center'
+                                                                }}>
+                                                                    <div style={{fontWeight: 700, color: pendingVisits > 0 ? '#f57c00' : '#2e7d32', fontSize: '1.2rem'}}>
+                                                                        {pendingVisits}
+                                                                    </div>
+                                                                    <div style={{fontSize: '0.7rem', color: 'var(--text-secondary)'}}>
+                                                                        Pending
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="patient-actions" style={{flexDirection: 'column', gap: '0.5rem'}}>
+                                                            <button 
+                                                                className="btn btn-primary btn-small"
+                                                                onClick={() => openPatientHistory(patient.regNumber)}
+                                                            >
+                                                                View History
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-danger btn-small"
+                                                                onClick={() => {
+                                                                    if (confirm(`Delete all ${patient.visits.length} visits for ${patient.regNumber}?`)) {
+                                                                        patient.visits.forEach(visit => deleteVisit(visit.id));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Delete All
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                    })()}
+                                </div>
+
+                                {visits.length > 0 && (
+                                    <button 
+                                        className="btn btn-danger" 
+                                        onClick={clearAllData}
+                                        style={{width: '100%', marginTop: '1rem'}}
+                                    >
+                                        Clear All Data
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PATIENT HISTORY MODAL */}
+                    {showPatientHistory && selectedPatient && (
+                        <div className="modal-overlay" onClick={() => setShowPatientHistory(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '700px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">📊 Patient Tablet History</div>
+                                    <button className="modal-close" onClick={() => setShowPatientHistory(false)}>×</button>
+                                </div>
+
+                                <div style={{
+                                    background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
+                                    color: 'white',
+                                    padding: '1.5rem',
+                                    borderRadius: '12px',
+                                    marginBottom: '1.5rem'
+                                }}>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem'}}>
+                                        {selectedPatient.regNumber}
+                                    </div>
+                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '1rem'}}>
+                                        <div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.25rem'}}>
+                                                Total Tablets
+                                            </div>
+                                            <div style={{fontSize: '2.5rem', fontWeight: 700}}>
+                                                {selectedPatient.totalTabletDays}
+                                            </div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9}}>days</div>
+                                        </div>
+                                        <div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.25rem'}}>
+                                                Total Visits
+                                            </div>
+                                            <div style={{fontSize: '2.5rem', fontWeight: 700}}>
+                                                {selectedPatient.visits.length}
+                                            </div>
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9}}>visits</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3 style={{marginBottom: '1rem', color: 'var(--primary)', fontSize: '1.1rem'}}>
+                                    Visit History
+                                </h3>
+
+                                <div className="patient-list" style={{maxHeight: '400px'}}>
+                                    {selectedPatient.visits.map((visit, index) => (
+                                        <div key={visit.id} style={{
+                                            background: 'var(--bg-main)',
+                                            padding: '1rem',
+                                            borderRadius: '8px',
+                                            marginBottom: '0.75rem',
+                                            border: '2px solid var(--border)',
+                                            borderLeft: '4px solid var(--secondary)'
+                                        }}>
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'flex-start',
+                                                marginBottom: '0.5rem'
+                                            }}>
+                                                <div>
+                                                    <div style={{
+                                                        fontSize: '0.75rem',
+                                                        color: 'var(--text-secondary)',
+                                                        marginBottom: '0.25rem'
+                                                    }}>
+                                                        Visit #{selectedPatient.visits.length - index}
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: '1rem',
+                                                        fontWeight: 600,
+                                                        color: 'var(--text-primary)'
+                                                    }}>
+                                                        {formatDate(visit.visitDate)}
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    background: 'var(--secondary)',
+                                                    color: 'white',
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: '6px',
+                                                    fontWeight: 700,
+                                                    fontSize: '1.1rem'
+                                                }}>
+                                                    {visit.tabletDays} days
+                                                </div>
+                                            </div>
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                color: 'var(--text-secondary)',
+                                                marginTop: '0.5rem'
+                                            }}>
+                                                <div>Next visit: {formatDate(visit.nextVisitDate)}</div>
+                                                <div>Status: {visit.completed ? '✅ Completed' : '⏳ Pending'}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div style={{
+                                    marginTop: '1.5rem',
+                                    padding: '1rem',
+                                    background: '#e8f5e9',
+                                    borderRadius: '8px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>
+                                        Treatment Duration
+                                    </div>
+                                    <div style={{fontSize: '1.2rem', fontWeight: 700, color: 'var(--secondary)'}}>
+                                        {formatDate(selectedPatient.firstVisitDate)} to {formatDate(selectedPatient.lastNextVisitDate)}
+                                    </div>
+                                    <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem'}}>
+                                        ({Math.ceil((new Date(selectedPatient.lastNextVisitDate) - new Date(selectedPatient.firstVisitDate)) / (1000 * 60 * 60 * 24))} days)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* DATE MODAL */}
+                    {showModal && (
+                        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <div className="modal-title">Patients - {modalDate}</div>
+                                    <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+                                </div>
+                                
+                                {modalPatients.length === 0 ? (
+                                    <div className="empty-state">
+                                        <div className="empty-state-icon">📋</div>
+                                        <p>No patients scheduled</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{
+                                            background: 'var(--bg-main)',
+                                            padding: '0.75rem',
+                                            borderRadius: '8px',
+                                            marginBottom: '1rem',
+                                            fontSize: '0.85rem',
+                                            color: 'var(--text-secondary)'
+                                        }}>
+                                            <strong>
+                                                {new Set(modalPatients.filter(v => !v.completed).map(v => v.regNumber.trim().toUpperCase())).size}
+                                            </strong> unique patients pending
+                                        </div>
+                                        <div className="patient-list">
+                                            {modalPatients.map(visit => (
+                                                <div key={visit.id} className={`patient-item ${visit.completed ? 'completed' : ''}`}>
+                                                    <div className="patient-info">
+                                                        <div className="patient-reg">{visit.regNumber}</div>
+                                                        <div className="patient-date">
+                                                            {visit.completed ? 'Completed ✓' : 'Pending'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="patient-actions">
+                                                        <div className="checkbox-wrapper">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="checkbox"
+                                                                checked={visit.completed}
+                                                                onChange={() => toggleCompleted(visit.id)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MONTH VIEW MODAL */}
+                    {showMonthView && selectedMonth !== null && (
+                        <div className="modal-overlay" onClick={() => setShowMonthView(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '1200px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">
+                                        {MONTHS[selectedMonth]} 2026
+                                    </div>
+                                    <button className="modal-close" onClick={() => setShowMonthView(false)}>×</button>
+                                </div>
+                                
+                                <div className="month-view-calendar">
+                                    {getMonthDatesDetailed(selectedMonth).map((dateInfo) => {
+                                        let dateClass = 'month-view-date';
+                                        if (dateInfo.isToday) dateClass += ' today';
+                                        if (dateInfo.isSunday) dateClass += ' sunday';
+                                        if (dateInfo.holiday) {
+                                            if (dateInfo.holiday.type === 'poya') {
+                                                dateClass += ' poya';
+                                            } else {
+                                                dateClass += ' holiday';
+                                            }
+                                        }
+                                        
+                                        return (
+                                            <div 
+                                                key={dateInfo.day}
+                                                className={dateClass}
+                                                onClick={() => {
+                                                    if (dateInfo.count > 0) {
+                                                        openModalForDate(dateInfo.date);
+                                                    }
+                                                }}
+                                            >
+                                                <div className="month-view-day-name">{dateInfo.dayName}</div>
+                                                <div className="month-view-day-number">{dateInfo.day}</div>
+                                                {dateInfo.count > 0 && (
+                                                    <div className="month-view-pt-count">{dateInfo.count} PT</div>
+                                                )}
+                                                {dateInfo.holiday && (
+                                                    <div className="month-view-holiday-name">{dateInfo.holiday.name}</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* YEAR VIEW MODAL */}
+                    {showYearView && (
+                        <div className="modal-overlay" onClick={() => setShowYearView(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '1200px'}}>
+                                <div className="modal-header">
+                                    <div className="modal-title">
+                                        Full Year - {new Date().getFullYear()}
+                                    </div>
+                                    <button className="modal-close" onClick={() => setShowYearView(false)}>×</button>
+                                </div>
+                                
+                                <h3 style={{marginBottom: '1rem', color: 'var(--primary)'}}>Unique Patients by Month</h3>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(6, 1fr)',
+                                    gap: '0.75rem',
+                                    marginTop: '1rem'
+                                }}>
+                                    {MONTHS.map((month, index) => {
+                                        const count = getUniquePatientsForMonth(index);
+                                        return (
+                                            <div 
+                                                key={month}
+                                                style={{
+                                                    background: 'var(--bg-main)',
+                                                    border: '2px solid var(--border)',
+                                                    borderRadius: '8px',
+                                                    padding: '1.25rem',
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onClick={() => openMonthView(index)}
+                                            >
+                                                <div style={{
+                                                    fontSize: '1.1rem',
+                                                    fontWeight: 700,
+                                                    color: 'var(--primary)',
+                                                    marginBottom: '0.5rem',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.5px'
+                                                }}>
+                                                    {month.slice(0, 3)}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '2rem',
+                                                    fontWeight: 700,
+                                                    color: 'var(--text-primary)'
+                                                }}>
+                                                    {count}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div style={{
+                                    marginTop: '2rem',
+                                    padding: '1rem',
+                                    background: 'var(--bg-main)',
+                                    borderRadius: '8px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>
+                                        Total Unique Patients
+                                    </div>
+                                    <div style={{fontSize: '3rem', fontWeight: 700, color: 'var(--primary)'}}>
+                                        {visitIndexes.totalUniquePatients}
+                                    </div>
+                                    <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem'}}>
+                                        ({visits.length} total entries)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <header className="header">
+                        <h1>PT Tablet Follow-up</h1>
+                        <p>Performance Optimized - Track tablet distribution and follow-ups</p>
+                        {googleScriptUrl && (
+                            <button 
+                                onClick={() => setShowSetup(true)}
+                                style={{
+                                    position: 'absolute',
+                                    top: '1rem',
+                                    right: '1rem',
+                                    background: 'rgba(255,255,255,0.2)',
+                                    border: 'none',
+                                    color: 'white',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                ⚙️ Settings
+                            </button>
+                        )}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '1rem',
+                            right: '1rem',
+                            background: 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(10px)',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderRadius: '8px',
+                            padding: '0.5rem 0.75rem',
+                            textAlign: 'center',
+                            minWidth: '80px'
+                        }}>
+                            <div style={{
+                                fontSize: '0.65rem',
+                                color: 'white',
+                                opacity: 0.85,
+                                marginBottom: '0.25rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                fontWeight: 600
+                            }}>
+                                Total Patients
+                            </div>
+                            <div style={{
+                                fontSize: '1.75rem',
+                                fontWeight: 700,
+                                color: 'white',
+                                lineHeight: 1
+                            }}>
+                                {visitIndexes.totalUniquePatients}
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="stats-grid">
+                        <div 
+                            className="stat-card" 
+                            style={{background: 'linear-gradient(135deg, var(--secondary) 0%, #00aa70 100%)', color: 'white', border: 'none'}}
+                        >
+                            <div className="stat-date" style={{fontSize: '0.75rem', marginBottom: '0.5rem', marginTop: 0, color: 'white', opacity: 0.9}}>
+                                Unique Patients Today
+                            </div>
+                            <div className="stat-value" style={{fontSize: '3.5rem', color: 'white'}}>
+                                {pendingToday}
+                            </div>
+                            <div className="stat-label" style={{fontSize: '0.85rem', color: 'white', opacity: 0.9}}>Pending Follow-ups</div>
+                        </div>
+                        <div 
+                            className="stat-card clickable" 
+                            onClick={() => openModalForDate(new Date())}
+                            style={{cursor: 'pointer'}}
+                        >
+                            <div className="stat-date" style={{fontSize: '0.75rem', marginBottom: '0.5rem', marginTop: 0}}>
+                                {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </div>
+                            <div className="stat-value" style={{fontSize: '3.5rem'}}>
+                                {new Date().getDate()}
+                            </div>
+                            <div className="stat-label" style={{fontSize: '0.85rem'}}>Today - {pendingToday} Patients</div>
+                        </div>
+                    </div>
+
+                    <div className="stats-grid-2">
+                        {getNext6Visits().map((visitInfo, index) => (
+                            <div 
+                                key={index} 
+                                className="stat-card clickable"
+                                onClick={() => openModalForDate(visitInfo.fullDate)}
+                                style={{cursor: 'pointer'}}
+                            >
+                                <div className="stat-date" style={{fontSize: '0.7rem', marginBottom: '0.5rem', marginTop: 0}}>
+                                    {visitInfo.month}
+                                </div>
+                                <div className="stat-value" style={{fontSize: '2.5rem'}}>
+                                    {visitInfo.day}
+                                </div>
+                                <div className="stat-label" style={{fontSize: '0.7rem'}}>Next {index + 1}<br/>{visitInfo.count} PT</div>
+                            </div>
+                        ))}
+                        <div 
+                            className="stat-card clickable" 
+                            onClick={() => setShowMonthCalendar(true)}
+                            style={{cursor: 'pointer', background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', color: 'white'}}
+                        >
+                            <div className="stat-date" style={{fontSize: '0.7rem', marginBottom: '0.5rem', marginTop: 0, color: 'white', opacity: 0.9}}>
+                                {new Date().getFullYear()}
+                            </div>
+                            <div className="stat-value" style={{fontSize: '1.5rem', color: 'white'}}>
+                                {new Date().toLocaleDateString('en-US', { month: 'short' })}
+                            </div>
+                            <div className="stat-label" style={{fontSize: '0.7rem', color: 'white', opacity: 0.9}}>Full Month</div>
+                        </div>
+                        <div 
+                            className="stat-card clickable" 
+                            onClick={() => setShowYearView(true)}
+                            style={{cursor: 'pointer', background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)', color: 'white', border: 'none'}}
+                        >
+                            <div className="stat-date" style={{fontSize: '0.7rem', marginBottom: '0.5rem', marginTop: 0, color: 'white', opacity: 0.9}}>
+                                Full Year
+                            </div>
+                            <div className="stat-value" style={{fontSize: '2rem', color: 'white'}}>
+                                {new Date().getFullYear()}
+                            </div>
+                            <div className="stat-label" style={{fontSize: '0.7rem', color: 'white', opacity: 0.9}}>All Data</div>
+                        </div>
+                    </div>
+
+                    <div className="main-content">
+                        <div className="card">
+                            <h2 className="card-title">Assign Tablets</h2>
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group" style={{position: 'relative'}}>
+                                    <label className="form-label">PT Registration Number *</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={regNumber}
+                                        onChange={handleRegNumberChange}
+                                        onFocus={() => setShowRegSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowRegSuggestions(false), 200)}
+                                        placeholder="2026/ABC/0001"
+                                        maxLength={14}
+                                        required
+                                        autoFocus
+                                        style={{
+                                            fontFamily: 'JetBrains Mono, monospace',
+                                            fontSize: '1.1rem',
+                                            letterSpacing: '0.5px'
+                                        }}
+                                    />
+                                    {showRegSuggestions && regNumberSuggestions.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            background: 'white',
+                                            border: '2px solid var(--primary)',
+                                            borderRadius: '8px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000,
+                                            boxShadow: 'var(--shadow-lg)',
+                                            marginTop: '0.25rem'
+                                        }}>
+                                            {regNumberSuggestions.map(suggestion => {
+                                                const patient = patientTabletData[suggestion.toUpperCase()];
+                                                return (
+                                                    <div
+                                                        key={suggestion}
+                                                        onClick={() => {
+                                                            setRegNumber(patient.regNumber);
+                                                            setShowRegSuggestions(false);
+                                                        }}
+                                                        style={{
+                                                            padding: '0.75rem 1rem',
+                                                            cursor: 'pointer',
+                                                            borderBottom: '1px solid var(--border)',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = 'var(--bg-main)'}
+                                                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                                                    >
+                                                        <div style={{
+                                                            fontWeight: 600,
+                                                            color: 'var(--primary)',
+                                                            fontFamily: 'JetBrains Mono, monospace',
+                                                            marginBottom: '0.25rem'
+                                                        }}>
+                                                            {patient.regNumber}
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '0.75rem',
+                                                            color: 'var(--text-secondary)',
+                                                            display: 'flex',
+                                                            gap: '1rem'
+                                                        }}>
+                                                            <span>💊 {patient.totalTabletDays} days</span>
+                                                            <span>🔢 {patient.visits.length} visits</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {regNumber && patientTabletData[regNumber.trim().toUpperCase()] && (
+                                        <div style={{
+                                            marginTop: '0.5rem',
+                                            padding: '0.5rem',
+                                            background: '#e3f2fd',
+                                            borderRadius: '6px',
+                                            fontSize: '0.85rem',
+                                            color: '#1976d2'
+                                        }}>
+                                            <strong>Existing Patient</strong> - Total tablets: <strong>{getPatientTotalTablets(regNumber)} days</strong>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Visit Date *</label>
+                                    <input
+                                        type="date"
+                                        className="form-input"
+                                        value={visitDate}
+                                        onChange={(e) => setVisitDate(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Next Visit Date *</label>
+                                    <input
+                                        type="date"
+                                        className="form-input"
+                                        value={nextVisitDate}
+                                        onChange={(e) => setNextVisitDate(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                {visitDate && nextVisitDate && (
+                                    <div style={{
+                                        marginBottom: '1.25rem',
+                                        padding: '1rem',
+                                        background: 'linear-gradient(135deg, #00cc88 0%, #00aa70 100%)',
+                                        borderRadius: '8px',
+                                        color: 'white'
+                                    }}>
+                                        <div style={{fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.25rem'}}>
+                                            Tablets to be given:
+                                        </div>
+                                        <div style={{fontSize: '2rem', fontWeight: 700}}>
+                                            {calculateTabletDays(visitDate, nextVisitDate)} days
+                                        </div>
+                                        {regNumber && (
+                                            <div style={{fontSize: '0.75rem', opacity: 0.9, marginTop: '0.5rem'}}>
+                                                New total: {getPatientTotalTablets(regNumber) + calculateTabletDays(visitDate, nextVisitDate)} days
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <button type="submit" className="btn btn-primary" style={{width: '100%', marginBottom: '1rem'}}>
+                                    Add Next Visit
+                                </button>
+
+                                <button 
+                                    type="button"
+                                    className="btn btn-lookup" 
+                                    onClick={() => setShowLookup(true)}
+                                    style={{width: '100%'}}
+                                >
+                                    🔍 Look Up Patient Records
+                                </button>
+                            </form>
+
+                            {visits.length > 0 && (
+                                <>
+                                    <h3 className="card-title" style={{marginTop: '2rem'}}>Recent Entries</h3>
+                                    <div style={{
+                                        background: 'var(--bg-main)',
+                                        padding: '0.75rem',
+                                        borderRadius: '8px',
+                                        marginBottom: '1rem',
+                                        fontSize: '0.85rem',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        Latest visit per patient. Use <strong>Look Up</strong> for complete history.
+                                    </div>
+                                    <div className="patient-list">
+                                        {Object.values(patientTabletData)
+                                            .sort((a, b) => new Date(b.lastVisitDate) - new Date(a.lastVisitDate))
+                                            .slice(0, 15)
+                                            .map(patient => {
+                                                const latestVisit = patient.visits[patient.visits.length - 1];
+                                                return (
+                                                    <div key={patient.regNumber} className={`patient-item ${latestVisit.completed ? 'completed' : ''}`}>
+                                                        <div className="patient-info">
+                                                            <div className="patient-reg">{patient.regNumber}</div>
+                                                            <div className="patient-date">
+                                                                Latest: {formatDate(latestVisit.visitDate)} → Next: {formatDate(latestVisit.nextVisitDate)}
+                                                            </div>
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                gap: '1rem',
+                                                                marginTop: '0.5rem',
+                                                                fontSize: '0.8rem'
+                                                            }}>
+                                                                <span style={{color: 'var(--secondary)', fontWeight: 600}}>
+                                                                    📊 Last: {latestVisit.tabletDays} days
+                                                                </span>
+                                                                <span style={{color: 'var(--primary)', fontWeight: 600}}>
+                                                                    💊 Total: {patient.totalTabletDays} days
+                                                                </span>
+                                                                <span style={{color: 'var(--text-secondary)'}}>
+                                                                    🔢 {patient.visits.length} visits
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            className="btn btn-secondary btn-small"
+                                                            onClick={() => openPatientHistory(patient.regNumber)}
+                                                        >
+                                                            View History
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        }
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="card" style={{marginBottom: '2rem'}}>
+                            <h2 className="card-title">2026 Calendar</h2>
+                            <div className="calendar-year-grid">
+                                {MONTHS.map((month, index) => {
+                                    const uniquePatientCount = getUniquePatientsForMonth(index);
+                                    
+                                    return (
+                                        <div 
+                                            key={month} 
+                                            className="calendar-month-card"
+                                            onClick={() => openMonthView(index)}
+                                            style={{
+                                                minHeight: 'auto',
+                                                padding: '1rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                fontWeight: 700,
+                                                color: 'var(--primary)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '1px',
+                                                marginBottom: '0.5rem'
+                                            }}>
+                                                {month.slice(0, 3)}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '2rem',
+                                                fontWeight: 700,
+                                                color: uniquePatientCount > 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                lineHeight: 1
+                                            }}>
+                                                {uniquePatientCount}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>
