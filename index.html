@@ -1408,6 +1408,38 @@
                                 ⚙️ Google Sheets Settings
                             </button>
                         )}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '1rem',
+                            right: '1rem',
+                            background: 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(10px)',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderRadius: '12px',
+                            padding: '1rem 1.5rem',
+                            textAlign: 'center',
+                            minWidth: '140px'
+                        }}>
+                            <div style={{
+                                fontSize: '0.75rem',
+                                color: 'white',
+                                opacity: 0.9,
+                                marginBottom: '0.5rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                fontWeight: 600
+                            }}>
+                                Total Patients
+                            </div>
+                            <div style={{
+                                fontSize: '3rem',
+                                fontWeight: 700,
+                                color: 'white',
+                                lineHeight: 1
+                            }}>
+                                {uniquePatientCounts.total}
+                            </div>
+                        </div>
                     </header>
 
                     <div className="stats-grid">
