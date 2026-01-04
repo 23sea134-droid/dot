@@ -657,6 +657,36 @@
             letter-spacing: 0.5px;
         }
 
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            margin-top: 0.25rem;
+        }
+
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: var(--bg-main);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -825,6 +855,8 @@
             const [showSetup, setShowSetup] = useState(!localStorage.getItem('googleScriptUrl'));
             const [showPatientHistory, setShowPatientHistory] = useState(false);
             const [selectedPatient, setSelectedPatient] = useState(null);
+            const [showRegSuggestions, setShowRegSuggestions] = useState(false);
+            const [showLookupSuggestions, setShowLookupSuggestions] = useState(false);
 
             // Load data from Google Sheets when component mounts
             useEffect(() => {
@@ -1268,6 +1300,31 @@
                 };
             }, [visits]);
 
+            // AUTOCOMPLETE: Get suggestions for registration numbers
+            const getRegNumberSuggestions = useCallback((searchTerm) => {
+                if (!searchTerm || searchTerm.length < 1) return [];
+                
+                const search = searchTerm.toUpperCase().trim();
+                const allRegNumbers = Object.keys(patientTabletData);
+                
+                // Match by: full number, or last 4 digits
+                return allRegNumbers.filter(regNum => {
+                    const upper = regNum.toUpperCase();
+                    // Extract last 4 characters (usually the numeric part)
+                    const last4 = regNum.slice(-4);
+                    return upper.includes(search) || last4.includes(search);
+                }).slice(0, 10); // Limit to 10 suggestions
+            }, [patientTabletData]);
+
+            // Get current suggestions based on input
+            const regNumberSuggestions = useMemo(() => {
+                return getRegNumberSuggestions(regNumber);
+            }, [regNumber, getRegNumberSuggestions]);
+
+            const lookupSuggestions = useMemo(() => {
+                return getRegNumberSuggestions(lookupSearch);
+            }, [lookupSearch, getRegNumberSuggestions]);
+
             const openPatientHistory = (regNumber) => {
                 const regNum = regNumber.trim().toUpperCase();
                 const patientInfo = patientTabletData[regNum];
@@ -1415,15 +1472,76 @@
                                     </div>
                                 </div>
 
-                                <div className="search-box">
+                                <div className="search-box" style={{position: 'relative'}}>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder="Search by registration number..."
+                                        placeholder="Search by registration number or last 4 digits..."
                                         value={lookupSearch}
-                                        onChange={(e) => setLookupSearch(e.target.value)}
+                                        onChange={(e) => {
+                                            setLookupSearch(e.target.value);
+                                            setShowLookupSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowLookupSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowLookupSuggestions(false), 200)}
                                         autoFocus
                                     />
+                                    {showLookupSuggestions && lookupSuggestions.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            background: 'white',
+                                            border: '2px solid var(--primary)',
+                                            borderRadius: '8px',
+                                            maxHeight: '250px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000,
+                                            boxShadow: 'var(--shadow-lg)',
+                                            marginTop: '0.25rem'
+                                        }}>
+                                            {lookupSuggestions.map(suggestion => {
+                                                const patient = patientTabletData[suggestion.toUpperCase()];
+                                                return (
+                                                    <div
+                                                        key={suggestion}
+                                                        onClick={() => {
+                                                            setLookupSearch(patient.regNumber);
+                                                            setShowLookupSuggestions(false);
+                                                        }}
+                                                        style={{
+                                                            padding: '0.75rem 1rem',
+                                                            cursor: 'pointer',
+                                                            borderBottom: '1px solid var(--border)',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = 'var(--bg-main)'}
+                                                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                                                    >
+                                                        <div style={{
+                                                            fontWeight: 600,
+                                                            color: 'var(--primary)',
+                                                            fontFamily: 'JetBrains Mono, monospace',
+                                                            marginBottom: '0.25rem'
+                                                        }}>
+                                                            {patient.regNumber}
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '0.75rem',
+                                                            color: 'var(--text-secondary)',
+                                                            display: 'flex',
+                                                            gap: '1rem'
+                                                        }}>
+                                                            <span>💊 {patient.totalTabletDays} days</span>
+                                                            <span>🔢 {patient.visits.length} visits</span>
+                                                            <span>Last: {formatDate(patient.lastVisitDate)}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 <div className="patient-list" style={{maxHeight: '400px'}}>
@@ -1680,17 +1798,77 @@
                         <div className="card">
                             <h2 className="card-title">Assign Tablets</h2>
                             <form onSubmit={handleSubmit}>
-                                <div className="form-group">
+                                <div className="form-group" style={{position: 'relative'}}>
                                     <label className="form-label">PT Registration Number *</label>
                                     <input
                                         type="text"
                                         className="form-input"
                                         value={regNumber}
-                                        onChange={(e) => setRegNumber(e.target.value)}
-                                        placeholder="2026/ABC/0001"
+                                        onChange={(e) => {
+                                            setRegNumber(e.target.value);
+                                            setShowRegSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowRegSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowRegSuggestions(false), 200)}
+                                        placeholder="2026/ABC/0001 or type last 4 digits"
                                         required
                                         autoFocus
                                     />
+                                    {showRegSuggestions && regNumberSuggestions.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            background: 'white',
+                                            border: '2px solid var(--primary)',
+                                            borderRadius: '8px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000,
+                                            boxShadow: 'var(--shadow-lg)',
+                                            marginTop: '0.25rem'
+                                        }}>
+                                            {regNumberSuggestions.map(suggestion => {
+                                                const patient = patientTabletData[suggestion.toUpperCase()];
+                                                return (
+                                                    <div
+                                                        key={suggestion}
+                                                        onClick={() => {
+                                                            setRegNumber(patient.regNumber);
+                                                            setShowRegSuggestions(false);
+                                                        }}
+                                                        style={{
+                                                            padding: '0.75rem 1rem',
+                                                            cursor: 'pointer',
+                                                            borderBottom: '1px solid var(--border)',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = 'var(--bg-main)'}
+                                                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                                                    >
+                                                        <div style={{
+                                                            fontWeight: 600,
+                                                            color: 'var(--primary)',
+                                                            fontFamily: 'JetBrains Mono, monospace',
+                                                            marginBottom: '0.25rem'
+                                                        }}>
+                                                            {patient.regNumber}
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '0.75rem',
+                                                            color: 'var(--text-secondary)',
+                                                            display: 'flex',
+                                                            gap: '1rem'
+                                                        }}>
+                                                            <span>💊 {patient.totalTabletDays} days</span>
+                                                            <span>🔢 {patient.visits.length} visits</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                     {regNumber && patientTabletData[regNumber.trim().toUpperCase()] && (
                                         <div style={{
                                             marginTop: '0.5rem',
@@ -1827,27 +2005,40 @@
                             <div className="calendar-year-grid">
                                 {MONTHS.map((month, index) => {
                                     const uniquePatientCount = getUniquePatientsForMonth(index);
-                                    const holidays = getHolidaysForMonth(index);
                                     
                                     return (
                                         <div 
                                             key={month} 
                                             className="calendar-month-card"
                                             onClick={() => openMonthView(index)}
+                                            style={{
+                                                minHeight: 'auto',
+                                                padding: '1rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer'
+                                            }}
                                         >
-                                            <div className="calendar-month-header">{month}</div>
-                                            <div className="calendar-month-count">{uniquePatientCount}</div>
-                                            <div className="calendar-month-subcount">Unique Patients</div>
-                                            {holidays.length > 0 && (
-                                                <div className="calendar-month-holidays">
-                                                    {holidays.slice(0, 2).map((h, i) => (
-                                                        <div key={i} className={`holiday-badge ${h.type === 'poya' ? 'poya' : ''}`}>
-                                                            {h.name}
-                                                        </div>
-                                                    ))}
-                                                    {holidays.length > 2 && <div className="holiday-more">+{holidays.length - 2} more</div>}
-                                                </div>
-                                            )}
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                fontWeight: 700,
+                                                color: 'var(--primary)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '1px',
+                                                marginBottom: '0.5rem'
+                                            }}>
+                                                {month.slice(0, 3)}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '2rem',
+                                                fontWeight: 700,
+                                                color: uniquePatientCount > 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                lineHeight: 1
+                                            }}>
+                                                {uniquePatientCount}
+                                            </div>
                                         </div>
                                     );
                                 })}
