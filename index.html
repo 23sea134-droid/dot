@@ -883,7 +883,7 @@
                 }
             }, [googleScriptUrl]);
 
-            // Google Sheets API functions
+            // FIXED: Improved Google Sheets API function with proper error handling
             const callGoogleScript = async (action, data = {}) => {
                 if (!googleScriptUrl) {
                     alert('Please setup Google Sheets connection first!');
@@ -892,9 +892,10 @@
 
                 try {
                     setLoading(true);
+                    
+                    // FIXED: Removed 'mode: no-cors' to allow reading responses
                     const response = await fetch(googleScriptUrl, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -904,26 +905,57 @@
                         })
                     });
 
-                    // Since we're using no-cors, we can't read the response
-                    // So we'll reload data after a short delay
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    if (action !== 'getAllVisits') {
-                        await loadDataFromGoogle();
+                    // FIXED: Now we can actually read the response!
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('Success:', action, result.message || 'OK');
+                        
+                        // Reload data after mutations to get fresh data
+                        if (action !== 'getAllVisits') {
+                            await loadDataFromGoogle();
+                        }
+                    } else {
+                        console.error('Server error:', result.error);
+                        alert('Error: ' + (result.error || 'Unknown error'));
                     }
                     
-                    return {success: true};
+                    return result;
+                    
                 } catch (error) {
                     console.error('Error calling Google Script:', error);
-                    alert('Error connecting to Google Sheets. Please check your setup.');
+                    alert('Error connecting to Google Sheets. Please check:\n1. Your internet connection\n2. The Web App URL is correct\n3. The script is deployed properly');
                     return null;
                 } finally {
                     setLoading(false);
                 }
             };
 
+            // FIXED: Improved data loading with better error handling
             const loadDataFromGoogle = async () => {
+                if (!googleScriptUrl) {
+                    // Load from local storage if no Google Sheets
+                    const savedVisits = localStorage.getItem('ptVisits');
+                    if (savedVisits) {
+                        try {
+                            const parsed = JSON.parse(savedVisits);
+                            const visitsWithDates = parsed.map(visit => ({
+                                ...visit,
+                                nextVisitDate: new Date(visit.nextVisitDate),
+                                recordedAt: new Date(visit.recordedAt)
+                            }));
+                            setVisits(visitsWithDates);
+                        } catch (e) {
+                            console.error('Error loading from local storage:', e);
+                        }
+                    }
+                    return;
+                }
+
                 try {
                     setLoading(true);
+                    
+                    // FIXED: Use GET request with proper URL parameter
                     const response = await fetch(googleScriptUrl + '?action=getAllVisits');
                     const result = await response.json();
                     
@@ -931,12 +963,22 @@
                         const visitsWithDates = result.visits.map(visit => ({
                             ...visit,
                             nextVisitDate: new Date(visit.nextVisitDate),
-                            recordedAt: new Date(visit.recordedAt)
+                            recordedAt: new Date(visit.recordedAt),
+                            completedAt: visit.completedAt ? new Date(visit.completedAt) : null
                         }));
                         setVisits(visitsWithDates);
+                        
+                        // Also save to local storage as backup
+                        localStorage.setItem('ptVisits', JSON.stringify(visitsWithDates));
+                        
+                        console.log('Loaded', visitsWithDates.length, 'visits from Google Sheets');
+                    } else {
+                        console.warn('No visits data returned or error:', result.error);
                     }
+                    
                 } catch (error) {
-                    console.error('Error loading data:', error);
+                    console.error('Error loading data from Google Sheets:', error);
+                    
                     // Fallback to local storage if Google Sheets fails
                     const savedVisits = localStorage.getItem('ptVisits');
                     if (savedVisits) {
@@ -948,6 +990,7 @@
                                 recordedAt: new Date(visit.recordedAt)
                             }));
                             setVisits(visitsWithDates);
+                            console.log('Loaded from local storage (Google Sheets failed)');
                         } catch (e) {
                             console.error('Error loading from local storage:', e);
                         }
@@ -987,23 +1030,33 @@
                 };
 
                 // Save to Google Sheets
-                await callGoogleScript('addVisit', { visit: newVisit });
+                const result = await callGoogleScript('addVisit', { visit: newVisit });
                 
-                // Also save to local storage as backup
-                const updatedVisits = [newVisit, ...visits];
-                setVisits(updatedVisits);
-                localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
-                
-                setRegNumber('');
-                setNextVisitDate('');
+                // Only update local state if Google Sheets succeeded
+                if (result && result.success) {
+                    // Data will be reloaded by callGoogleScript
+                    setRegNumber('');
+                    setNextVisitDate('');
+                } else {
+                    // If Google Sheets fails, save locally as backup
+                    const updatedVisits = [newVisit, ...visits];
+                    setVisits(updatedVisits);
+                    localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
+                    setRegNumber('');
+                    setNextVisitDate('');
+                }
             };
 
             const deleteVisit = async (id) => {
                 if (confirm('Are you sure you want to delete this entry?')) {
+                    // Delete from Google Sheets
                     await callGoogleScript('deleteVisit', { id });
+                    
+                    // Update local state
                     const updatedVisits = visits.filter(v => v.id !== id);
                     setVisits(updatedVisits);
                     localStorage.setItem('ptVisits', JSON.stringify(updatedVisits));
+                    
                     if (updatedVisits.length === 0) {
                         localStorage.removeItem('ptVisits');
                     }
@@ -1030,8 +1083,10 @@
                         completedAt: !visit.completed ? new Date() : null
                     };
                     
+                    // Update Google Sheets
                     await callGoogleScript('updateVisit', { visit: updatedVisit });
                     
+                    // Update local state
                     const updatedVisits = visits.map(v => 
                         v.id === id ? updatedVisit : v
                     );
