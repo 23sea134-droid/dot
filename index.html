@@ -962,6 +962,52 @@
                 return diffDays > 0 ? diffDays : 0;
             };
 
+            // Auto-format PT Registration Number: YYYY/AAA/0000
+            const formatRegNumber = (value) => {
+                // Remove all non-alphanumeric characters except existing slashes
+                let cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
+                
+                // Apply formatting based on length
+                if (cleaned.length <= 4) {
+                    // First part: YYYY (year)
+                    return cleaned;
+                } else if (cleaned.length <= 7) {
+                    // Second part: YYYY/AAA (year + letters)
+                    return cleaned.slice(0, 4) + '/' + cleaned.slice(4).toUpperCase();
+                } else {
+                    // Full format: YYYY/AAA/0000
+                    return cleaned.slice(0, 4) + '/' + cleaned.slice(4, 7).toUpperCase() + '/' + cleaned.slice(7, 11);
+                }
+            };
+
+            // Handle PT Registration Number input with formatting
+            const handleRegNumberChange = (e) => {
+                const input = e.target.value;
+                const cursorPosition = e.target.selectionStart;
+                const oldValue = regNumber;
+                
+                // Format the input
+                const formatted = formatRegNumber(input);
+                
+                // Calculate new cursor position
+                let newCursorPosition = cursorPosition;
+                
+                // If we added a slash, move cursor after it
+                if (formatted.length > oldValue.length && formatted[cursorPosition] === '/') {
+                    newCursorPosition = cursorPosition + 1;
+                }
+                
+                setRegNumber(formatted);
+                setShowRegSuggestions(formatted.length > 0);
+                
+                // Set cursor position after state update
+                setTimeout(() => {
+                    if (e.target) {
+                        e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+                    }
+                }, 0);
+            };
+
             // OPTIMIZATION: Memoized function to get unique patient count for a specific date
             const getUniquePatientsForDate = useCallback((date) => {
                 const dateKey = new Date(date).toDateString();
@@ -1103,6 +1149,13 @@
                 
                 if (!regNumber || !visitDate || !nextVisitDate) {
                     alert('Please fill in all required fields');
+                    return;
+                }
+
+                // Validate PT Registration Number format: YYYY/AAA/0000
+                const regNumberPattern = /^\d{4}\/[A-Z]{3}\/\d{4}$/;
+                if (!regNumberPattern.test(regNumber)) {
+                    alert('Invalid PT Registration Number format!\n\nRequired format: YYYY/AAA/0000\nExample: 2026/ABC/0001\n\n- First 4 digits: Year\n- 3 letters: Code (uppercase)\n- Last 4 digits: Number');
                     return;
                 }
 
@@ -1800,20 +1853,56 @@
                             <form onSubmit={handleSubmit}>
                                 <div className="form-group" style={{position: 'relative'}}>
                                     <label className="form-label">PT Registration Number *</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={regNumber}
-                                        onChange={(e) => {
-                                            setRegNumber(e.target.value);
-                                            setShowRegSuggestions(true);
-                                        }}
-                                        onFocus={() => setShowRegSuggestions(true)}
-                                        onBlur={() => setTimeout(() => setShowRegSuggestions(false), 200)}
-                                        placeholder="2026/ABC/0001 or type last 4 digits"
-                                        required
-                                        autoFocus
-                                    />
+                                    <div style={{
+                                        position: 'relative',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            value={regNumber}
+                                            onChange={handleRegNumberChange}
+                                            onFocus={() => setShowRegSuggestions(true)}
+                                            onBlur={() => setTimeout(() => setShowRegSuggestions(false), 200)}
+                                            placeholder="2026/ABC/0001"
+                                            maxLength={14}
+                                            required
+                                            autoFocus
+                                            style={{
+                                                fontFamily: 'JetBrains Mono, monospace',
+                                                fontSize: '1.1rem',
+                                                letterSpacing: '0.5px'
+                                            }}
+                                        />
+                                        <div style={{
+                                            position: 'absolute',
+                                            right: '1rem',
+                                            fontSize: '0.75rem',
+                                            color: 'var(--text-secondary)',
+                                            fontFamily: 'JetBrains Mono, monospace',
+                                            pointerEvents: 'none',
+                                            background: 'white',
+                                            padding: '0.25rem 0.5rem',
+                                            borderRadius: '4px',
+                                            border: '1px solid var(--border)'
+                                        }}>
+                                            YYYY/AAA/0000
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        fontSize: '0.75rem',
+                                        color: 'var(--text-secondary)',
+                                        marginTop: '0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}>
+                                        <span>ℹ️ Format:</span>
+                                        <span style={{fontFamily: 'JetBrains Mono, monospace'}}>
+                                            <strong>4 digits</strong> (year) / <strong>3 letters</strong> / <strong>4 digits</strong>
+                                        </span>
+                                    </div>
                                     {showRegSuggestions && regNumberSuggestions.length > 0 && (
                                         <div style={{
                                             position: 'absolute',
